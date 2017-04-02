@@ -1,0 +1,209 @@
+---
+title: "Prediccion Nros Correo"
+author: "Armand"
+date: "17 de julio de 2016"
+output: html_document
+---
+
+
+###Loading the libraries
+
+```{r}
+
+suppressMessages(library(e1071))
+suppressMessages(library(kknn))
+suppressMessages(library(MASS))
+suppressMessages(library(class))
+suppressMessages(library(rpart))
+suppressMessages(library(randomForest))
+suppressMessages(library(ada))
+suppressMessages(library(nnet))
+suppressMessages(library(caret))
+suppressMessages(library(car))
+
+
+
+```
+
+
+#Forecasting mail numbers
+
+
+Reading the training file
+```{r}
+
+datos <- read.table("zip.train", sep = " ", header = F)
+datos <- datos[, -258]
+
+```
+
+We need to transform the first variable into qualitative
+```{r}
+
+datos$V1 <- recode(datos$V1, "0='cero'; 1 ='uno'; 2 = 'dos'; 3 = 'tres'; 4 = 'cuatro'; 5 = 'cinco'; 6 = 'seis'; 7 = 'siete'; 8 = 'ocho'; 9 ='nueve' ")
+write.table(datos,"predicNum.csv", sep = ";")
+
+```
+
+##reading the csv Again
+```{r}
+
+datos <- read.csv("prediNum.csv", sep = ";", dec = ".", header = F)
+datos <- datos[, -258]
+
+```
+
+
+
+###Loading the test file
+
+```{r}
+
+ttesting <- read.table("zip.test", sep = " ", header = F)
+
+ttesting$V1 <- recode(ttesting$V1, "0='cero'; 1 ='uno'; 2 = 'dos'; 3 = 'tres'; 4 = 'cuatro'; 5 = 'cinco'; 6 = 'seis'; 7 = 'siete'; 8 = 'ocho'; 9 ='nueve' ")
+
+```
+
+
+
+
+##Applying randomforest algorithm (fit) with 500 trees
+```{r}
+
+#implementamos el modelo
+#modelo <-naiveBayes(V1 ~., data= datos)
+
+modelo <- randomForest(V1~., data= datos, importance= TRUE)
+modelo
+
+```
+
+
+The Forecasting
+
+```{r }
+prediction<- predict(modelo, ttesting[,-1], type = "class")
+prediction
+
+```
+
+
+The Confussion Matrix
+```{r }
+matriz.conf<- table(ttesting[, 1], prediction)
+matriz.conf
+
+
+```
+
+Accuray
+
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+Error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
+
+##Saving the model in order to use it later
+###Random forest
+```{r}
+#save(modelo, file = "modelos_random_forest.rda")
+
+```
+
+
+
+#Comparing with multplies models
+##SVM, Bayes, Tree, Random Forest, Knn
+
+```{r Seleccion de Metodos}
+
+error.svm <- rep(0,5)
+error.knn <- rep(0,5)
+error.bayes <- rep(0,5)
+error.arbol <- rep(0,5)
+error.bosque <- rep(0,5)
+
+#aqui se hace la ejecucion de los metodos 5 veces
+
+  for (i in 1:5) {
+    
+    #Modelos con SVM
+    modelo <- svm(V1~., data= datos, kernel = "radial")
+    prediction <- predict(modelo, ttesting)
+    matriz.conf<- table(ttesting[, 1], prediction)
+    aciertos <- sum(diag(matriz.conf))/sum(matriz.conf)
+    error.svm[i] <- 1- aciertos
+    
+    #con el bayes
+    modelo <- naiveBayes(V1~., data= datos)
+    prediction <- predict(modelo, ttesting)
+    #actual <- ttesting[,1]
+    #Calculamos el error
+    matriz.conf<- table(ttesting[, 1], prediction)
+    aciertos <- sum(diag(matriz.conf))/sum(matriz.conf)
+    error.bayes[i] <- 1- aciertos
+    
+    #Con el knn
+    
+    modelo <- train.kknn(V1~., data= datos, kmax = 9)
+    prediction <- predict(modelo, ttesting[,-1])
+    matriz.conf<- table(ttesting[, 1], prediction)
+    aciertos <- sum(diag(matriz.conf))/sum(matriz.conf)
+    error.knn[i] <- 1- aciertos
+    
+    #Con el arbol
+    
+    modelo <- rpart(V1~., data= datos)
+    prediction <- predict(modelo, ttesting, type = "class")
+    matriz.conf<- table(ttesting[, 1], prediction)
+    aciertos <- sum(diag(matriz.conf))/sum(matriz.conf)
+    error.arbol[i] <- 1- aciertos
+    
+
+    #Con el bosque con 1000 arboles
+    
+    modelo <- randomForest(V1~., data= datos, importance= TRUE, ntree = 700)
+    prediction <- predict(modelo, ttesting[,-1])
+    matriz.conf<- table(ttesting[, 1], prediction)
+    aciertos <- sum(diag(matriz.conf))/sum(matriz.conf)
+    error.bosque[i] <- 1- aciertos
+    
+  
+        
+  }
+  
+
+
+```
+
+
+##Ploting the results
+
+
+
+```{r}
+
+plot(error.bosque, col= "green", type="b", ylab = "Error", xlab= "# Iteraciones", main = "Comparativo Errores Distintos Metodos Prediccion", ylim = c(min(error.bosque,error.arbol, error.knn, error.bayes, error.svm), max(error.bosque,error.arbol, error.knn, error.bayes, error.svm)+ .12))
+points(error.arbol, col ="red", type = "b")
+points(error.bayes, col = "gold4", type = "b")
+points(error.knn, col = "navy", type = "b")
+points(error.svm, col ="violet", type = "b")
+legend("topright", legend = c( "Bosque Aleatorio", "Arbol", "Bayes", "KNN", "SVM"), lty = 1, lwd = 3, cex = .7, col = c("green","red", "gold4", "navy", "violet"))
+
+
+
+
+```
+
+
