@@ -1,5 +1,6 @@
 ---
-title: "Prediccion Nros Correo"
+title: "Hand Written Digit
+Recognition"
 author: "Armand"
 date: "17 de julio de 2016"
 output: html_document
