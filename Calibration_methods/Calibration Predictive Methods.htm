@@ -265,7 +265,7 @@ $(document).ready(function () {
 </div>
 <div id="example-with-scoring-file" class="section level1">
 <h1>Example with scoring file</h1>
-<p>Cargamos los datos</p>
+<p>Load The Data</p>
 <pre class="r"><code class="r"><span class="keyword">library</span><span class="paren">(</span><span class="identifier">kknn</span><span class="paren">)</span>
 <span class="identifier">datos</span> <span class="operator">&lt;-</span> <span class="identifier">read.csv</span><span class="paren">(</span><span class="string">"C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv"</span>, <span class="identifier">sep</span> <span class="operator">=</span> <span class="string">";"</span>, <span class="identifier">dec</span> <span class="operator">=</span> <span class="string">"."</span>, <span class="identifier">header</span> <span class="operator">=</span> <span class="literal">TRUE</span><span class="paren">)</span>
 <span class="identifier">ttesting</span> <span class="operator">&lt;-</span> <span class="identifier">read.table</span><span class="paren">(</span><span class="string">"C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv"</span>, <span class="identifier">sep</span> <span class="operator">=</span> <span class="string">";"</span>, <span class="identifier">header</span> <span class="operator">=</span> <span class="literal">TRUE</span><span class="paren">)</span>
@@ -336,7 +336,7 @@ $(document).ready(function () {
 ## 5     5.0     3.6     1.4     0.2 setosa
 ## 6     5.4     3.9     1.7     0.4 setosa</code></pre>
 <div id="the-modelo-is-made" class="section level2">
-<h2>the modelo is made</h2>
+<h2>Build the model</h2>
 <pre class="r"><code class="r"><span class="comment">#Generamos muestra al azar</span>
 <span class="identifier">muestra</span><span class="operator">&lt;-</span> <span class="identifier">sample</span><span class="paren">(</span><span class="number">1</span><span class="operator">:</span><span class="number">150</span>, <span class="number">50</span><span class="paren">)</span>
 <span class="comment">#tabla de testing</span>
@@ -881,7 +881,7 @@ $(document).ready(function () {
 <pre><code>## [1] 0.02</code></pre>
 </div>
 <div id="booting-methods-i.e-ada" class="section level1">
-<h1>Booting Methods, i.e ADA</h1>
+<h1>Boosting Methods, i.e ADA</h1>
 <p>Load the Data</p>
 <pre class="r"><code class="r"><span class="keyword">library</span><span class="paren">(</span><span class="identifier">ada</span><span class="paren">)</span>
 <span class="identifier">datos</span> <span class="operator">&lt;-</span> <span class="identifier">read.csv</span><span class="paren">(</span><span class="string">"C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv"</span>, <span class="identifier">sep</span> <span class="operator">=</span> <span class="string">";"</span>, <span class="identifier">dec</span> <span class="operator">=</span> <span class="string">"."</span>, <span class="identifier">header</span> <span class="operator">=</span> <span class="literal">TRUE</span><span class="paren">)</span>
