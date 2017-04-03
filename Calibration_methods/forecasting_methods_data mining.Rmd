@@ -1,0 +1,942 @@
+---
+title: "Calibration predictive methods"
+author: "Armand"
+date: "14 de julio de 2016"
+output: html_document
+---
+
+
+
+# K-nn
+
+
+load the Data
+```{r }
+library(kknn)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/iris.csv", sep = ";", dec = ".", header = TRUE)
+
+#Generamos muestra al azar
+muestra<- sample(1:150, 50)
+#tabla de testing
+ttesting<-datos[muestra,]
+#tabla de aprendizake
+taprendiz <- datos[-muestra,]
+
+#implementamos el modelo
+modelo <- train.kknn(tipo ~., data= taprendiz, kmax = 9)
+modelo
+
+```
+
+## Evaluation ofs Knn
+
+Performing the prediction:
+
+```{r }
+prediction<- predict(modelo, ttesting[,-5])
+head(prediction)
+
+```
+
+
+the confusion matrix
+
+```{r }
+matriz.conf<- table(ttesting[,5], prediction)
+matriz.conf
+
+
+```
+
+Hit percentage
+
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+The error:
+
+```{r }
+error<- 1 - aciertos
+error
+
+```
+
+
+#Example with scoring file
+
+Cargamos los datos
+```{r }
+library(kknn)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv", sep = ";", dec = ".", header = TRUE)
+ttesting <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv", sep = ";", header = TRUE)
+
+dim(datos)
+
+#tabla de aprendizake
+taprendiz <- datos
+
+```
+
+Transforming the Variables
+
+```{r }
+
+taprendiz$MontoCredito <- as.factor(taprendiz$MontoCredito)
+taprendiz$IngresoNeto <- as.factor(taprendiz$IngresoNeto)
+taprendiz$CoefCreditoAvaluo <- as.factor(taprendiz$CoefCreditoAvaluo)
+taprendiz$MontoCuota <-  as.factor(taprendiz$MontoCuota)
+taprendiz$GradoAcademico <- as.factor(taprendiz$GradoAcademico)
+taprendiz$BuenPagador <- as.factor(taprendiz$BuenPagador)
+
+#convertimos la de la tabla de testing
+ttesting$MontoCredito <- as.factor(ttesting$MontoCredito)
+ttesting$IngresoNeto <- as.factor(ttesting$IngresoNeto)
+ttesting$CoefCreditoAvaluo <- as.factor(ttesting$CoefCreditoAvaluo)
+ttesting$MontoCuota <- as.factor(ttesting$MontoCuota)
+ttesting$GradoAcademico <- as.factor(ttesting$GradoAcademico)
+ttesting$BuenPagador <- as.factor(ttesting$BuenPagador)
+```
+
+
+implementing the model
+```{r}
+#implementamos el modelo
+modelo <- train.kknn(BuenPagador ~ ., data= taprendiz, kmax = 5)
+modelo
+
+```
+
+
+Performing the Prediction:
+
+```{r }
+prediction<- predict(modelo, ttesting[,-6])
+head(prediction)
+
+```
+
+
+the confusion matrix
+
+```{r }
+matriz.conf<- table(ttesting[,6], prediction)
+matriz.conf
+
+
+```
+
+Hits
+
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+and the error:
+
+```{r }
+error<- 1 - aciertos
+error
+
+```
+
+
+#NAIVES BAYES
+
+Loadinfg the Data
+```{r }
+library(e1071)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/iris.csv", sep = ";", dec = ".", header = TRUE)
+head(datos)
+```
+
+##the modelo is made
+```{r}
+#Generamos muestra al azar
+muestra<- sample(1:150, 50)
+#tabla de testing
+ttesting<-datos[muestra,]
+#tabla de aprendizake
+taprendiz <- datos[-muestra,]
+
+#implementamos el modelo
+modelo <-naiveBayes(tipo ~., data= taprendiz)
+modelo
+
+```
+
+
+¨Performing the Prediction:
+
+```{r }
+prediction<- predict(modelo, ttesting[,-5])
+head(prediction)
+
+```
+
+
+#the confusion matrix
+
+```{r }
+matriz.conf<- table(ttesting[,5], prediction)
+matriz.conf
+
+
+```
+
+Hits
+
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+Error:
+
+```{r }
+error<- 1 - aciertos
+error
+
+```
+
+
+
+#Example Bayes with another data
+
+load the data
+```{r }
+library(kknn)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv", sep = ";", dec = ".", header = TRUE)
+ttesting <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv", sep = ";", header = TRUE)
+
+dim(datos)
+
+#tabla de aprendizake
+taprendiz <- datos
+
+```
+
+
+
+
+Transforming the variables 
+
+```{r }
+
+taprendiz$MontoCredito <- as.factor(taprendiz$MontoCredito)
+taprendiz$IngresoNeto <- as.factor(taprendiz$IngresoNeto)
+taprendiz$CoefCreditoAvaluo <- as.factor(taprendiz$CoefCreditoAvaluo)
+taprendiz$MontoCuota <-  as.factor(taprendiz$MontoCuota)
+taprendiz$GradoAcademico <- as.factor(taprendiz$GradoAcademico)
+taprendiz$BuenPagador <- as.factor(taprendiz$BuenPagador)
+
+#convertimos la de la tabla de testing
+ttesting$MontoCredito <- as.factor(ttesting$MontoCredito)
+ttesting$IngresoNeto <- as.factor(ttesting$IngresoNeto)
+ttesting$CoefCreditoAvaluo <- as.factor(ttesting$CoefCreditoAvaluo)
+ttesting$MontoCuota <- as.factor(ttesting$MontoCuota)
+ttesting$GradoAcademico <- as.factor(ttesting$GradoAcademico)
+ttesting$BuenPagador <- as.factor(ttesting$BuenPagador)
+```
+
+
+
+Making the model
+```{r}
+#implementamos el modelo
+modelo <- naiveBayes(BuenPagador ~ ., data= taprendiz)
+modelo
+
+```
+
+
+Performing the prediccion:
+
+```{r }
+prediction<- predict(modelo, ttesting[,-6])
+head(prediction)
+
+```
+
+
+the confusion matrix
+
+```{r }
+matriz.conf<- table(ttesting[,6], prediction)
+matriz.conf
+
+
+```
+
+Hits Percentage
+
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+The error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
+#Support Vector Machine Model
+
+
+Load the data
+```{r }
+library(e1071)
+library(class)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/iris.csv", sep = ";", dec = ".", header = TRUE)
+head(datos)
+```
+
+```{r}
+summary(datos)
+
+```
+
+The samples are generated
+```{r}
+
+#Generamos muestra al azar
+muestra<- sample(1:150, 50)
+#tabla de testing
+ttesting<-datos[muestra,]
+#tabla de aprendizake
+taprendiz <- datos[-muestra,]
+
+```
+
+##Build The Model
+
+```{r}
+
+#implementamos el modelo
+modelo <- svm(tipo ~., data= taprendiz, kernel= "linear")
+modelo
+
+```
+
+
+
+Performs The Prediction:
+
+```{r }
+prediction<- predict(modelo, ttesting)
+head(prediction)
+
+```
+
+the confusion matrix
+```{r }
+matriz.conf<- table(ttesting[,5], prediction)
+matriz.conf
+
+
+```
+
+Hist Percentage
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+The error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
+##in order to ploting we build the model again but with only 2 vars
+
+```{r}
+
+#implementamos el modelo
+modelo <- svm(tipo  ~ s.largo + s.ancho, data= taprendiz, kernel= "linear")
+modelo
+
+```
+
+Ploting
+```{r}
+
+plot(modelo, datos, s.ancho~s.largo, slice = list(s.ancho=1, s.largo=2))
+
+```
+
+
+
+#Example SVM with another data
+
+load the data
+```{r }
+library(kknn)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv", sep = ";", dec = ".", header = TRUE)
+ttesting <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv", sep = ";", header = TRUE)
+
+dim(datos)
+
+#tabla de aprendizake
+taprendiz <- datos
+
+```
+
+
+
+
+Transform the Variables
+
+```{r }
+
+taprendiz$MontoCredito <- as.factor(taprendiz$MontoCredito)
+taprendiz$IngresoNeto <- as.factor(taprendiz$IngresoNeto)
+taprendiz$CoefCreditoAvaluo <- as.factor(taprendiz$CoefCreditoAvaluo)
+taprendiz$MontoCuota <-  as.factor(taprendiz$MontoCuota)
+taprendiz$GradoAcademico <- as.factor(taprendiz$GradoAcademico)
+taprendiz$BuenPagador <- as.factor(taprendiz$BuenPagador)
+
+#convertimos la de la tabla de testing
+ttesting$MontoCredito <- as.factor(ttesting$MontoCredito)
+ttesting$IngresoNeto <- as.factor(ttesting$IngresoNeto)
+ttesting$CoefCreditoAvaluo <- as.factor(ttesting$CoefCreditoAvaluo)
+ttesting$MontoCuota <- as.factor(ttesting$MontoCuota)
+ttesting$GradoAcademico <- as.factor(ttesting$GradoAcademico)
+ttesting$BuenPagador <- as.factor(ttesting$BuenPagador)
+```
+
+
+Build the model
+```{r}
+#implementamos el modelo
+modelo <- svm(BuenPagador ~ ., data= taprendiz, kernel="linear")
+modelo
+
+```
+
+
+The Prediction
+```{r }
+prediction<- predict(modelo, ttesting)
+head(prediction)
+
+```
+
+
+the confusion matrix
+```{r }
+matriz.conf<- table(ttesting[,6], prediction)
+matriz.conf
+
+
+```
+
+Hits Percentage
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+The error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
+
+
+#Decision Tree
+
+
+Load the Data
+```{r }
+library(rpart)
+library(rpart.plot)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/iris.csv", sep = ";", dec = ".", header = TRUE)
+head(datos)
+```
+
+Build  the Model
+```{r}
+
+modelo <- rpart(tipo~., data = datos)
+modelo
+
+```
+
+
+
+Perform the Prediction
+```{r }
+prediction<- predict(modelo, datos, type = "class")
+head(prediction)
+
+```
+
+
+the confusion matrix
+```{r }
+matriz.conf<- table(datos[,5], prediction)
+matriz.conf
+
+
+```
+
+Hits
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+The error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
+Ploting
+```{r}
+plot(modelo)
+text(modelo)
+
+```
+
+#Ploting with Rpart.plot
+
+```{r}
+
+prp(modelo, extra=104, branch.type = 2, box.col = c("pink", "palegreen", "blue")[modelo$frame$yval] )
+
+```
+
+
+
+#DT with another data
+
+
+Load the Data
+```{r }
+library(kknn)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv", sep = ";", dec = ".", header = TRUE)
+ttesting <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv", sep = ";", header = TRUE)
+
+dim(datos)
+
+#tabla de aprendizake
+taprendiz <- datos
+
+```
+
+
+
+Transform the data
+```{r }
+
+taprendiz$MontoCredito <- as.factor(taprendiz$MontoCredito)
+taprendiz$IngresoNeto <- as.factor(taprendiz$IngresoNeto)
+taprendiz$CoefCreditoAvaluo <- as.factor(taprendiz$CoefCreditoAvaluo)
+taprendiz$MontoCuota <-  as.factor(taprendiz$MontoCuota)
+taprendiz$GradoAcademico <- as.factor(taprendiz$GradoAcademico)
+taprendiz$BuenPagador <- as.factor(taprendiz$BuenPagador)
+
+#convertimos la de la tabla de testing
+ttesting$MontoCredito <- as.factor(ttesting$MontoCredito)
+ttesting$IngresoNeto <- as.factor(ttesting$IngresoNeto)
+ttesting$CoefCreditoAvaluo <- as.factor(ttesting$CoefCreditoAvaluo)
+ttesting$MontoCuota <- as.factor(ttesting$MontoCuota)
+ttesting$GradoAcademico <- as.factor(ttesting$GradoAcademico)
+ttesting$BuenPagador <- as.factor(ttesting$BuenPagador)
+```
+
+
+
+The Model
+```{r}
+
+modelo <- rpart(BuenPagador~., data = taprendiz)
+modelo
+
+```
+
+
+Prediction;
+```{r }
+prediction<- predict(modelo, ttesting, type = "class")
+head(prediction)
+
+```
+
+
+the confusion matrix
+```{r }
+matriz.conf<- table(ttesting[,6], prediction)
+matriz.conf
+
+
+```
+
+Hits Percentage
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
+Ploting
+```{r}
+plot(modelo)
+text(modelo)
+
+```
+
+```{r}
+
+prp(modelo, extra=104, branch.type = 2, box.col = c("pink", "palegreen", "blue")[modelo$frame$yval] )
+
+```
+
+
+
+
+#Random Forest
+
+
+Load the Data
+```{r }
+library(randomForest)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/iris.csv", sep = ";", dec = ".", header = TRUE)
+head(datos)
+```
+
+```{r}
+summary(datos)
+
+```
+
+making the Samples
+```{r}
+
+#Generamos muestra al azar
+muestra<- sample(1:150, 50)
+#tabla de testing
+ttesting<-datos[muestra,]
+#tabla de aprendizake
+taprendiz <- datos[-muestra,]
+
+```
+
+
+
+Build the Model
+```{r}
+
+modelo <- randomForest(tipo~., data = taprendiz, importance= TRUE)
+modelo
+
+```
+
+
+Perform the Prediction
+```{r }
+prediction<- predict(modelo, ttesting, type = "class")
+head(prediction)
+
+```
+
+
+the confusion matrix
+```{r }
+matriz.conf<- table(ttesting[,5], prediction)
+matriz.conf
+
+
+```
+
+Hits Percentage
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+Error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
+
+#Booting Methods, i.e ADA
+
+Load the Data
+```{r }
+library(ada)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv", sep = ";", dec = ".", header = TRUE)
+ttesting <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv", sep = ";", header = TRUE)
+
+dim(datos)
+
+#tabla de aprendizake
+taprendiz <- datos
+
+```
+
+
+
+Transform the Data
+```{r }
+
+taprendiz$MontoCredito <- as.factor(taprendiz$MontoCredito)
+taprendiz$IngresoNeto <- as.factor(taprendiz$IngresoNeto)
+taprendiz$CoefCreditoAvaluo <- as.factor(taprendiz$CoefCreditoAvaluo)
+taprendiz$MontoCuota <-  as.factor(taprendiz$MontoCuota)
+taprendiz$GradoAcademico <- as.factor(taprendiz$GradoAcademico)
+taprendiz$BuenPagador <- as.factor(taprendiz$BuenPagador)
+
+#convertimos la de la tabla de testing
+ttesting$MontoCredito <- as.factor(ttesting$MontoCredito)
+ttesting$IngresoNeto <- as.factor(ttesting$IngresoNeto)
+ttesting$CoefCreditoAvaluo <- as.factor(ttesting$CoefCreditoAvaluo)
+ttesting$MontoCuota <- as.factor(ttesting$MontoCuota)
+ttesting$GradoAcademico <- as.factor(ttesting$GradoAcademico)
+ttesting$BuenPagador <- as.factor(ttesting$BuenPagador)
+```
+
+
+Make the Model
+```{r}
+
+modelo <- ada(BuenPagador~., data = taprendiz, iter=100, nu=1, type= "discrete")
+modelo
+
+```
+
+
+Perform the Prediction
+```{r }
+prediction<- predict(modelo, ttesting)
+head(prediction)
+
+```
+
+Create the confusion matrix
+```{r }
+matriz.conf<- table(ttesting[,6], prediction)
+matriz.conf
+
+
+```
+
+hits Percentage
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+Error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+Ploting the Results
+```{r}
+plot(modelo, TRUE,TRUE)
+
+```
+
+##Best Variables
+
+```{r}
+varplot(modelo)
+
+```
+
+
+
+
+#Neural Networks examples
+
+
+Load the data
+```{r }
+library(nnet)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/iris.csv", sep = ";", dec = ".", header = TRUE)
+head(datos)
+```
+
+```{r}
+summary(datos)
+
+```
+
+Made the samples
+```{r}
+
+#Generamos muestra al azar
+muestra<- sample(1:150, 50)
+#tabla de testing
+ttesting<-datos[muestra,]
+#tabla de aprendizake
+taprendiz <- datos[-muestra,]
+
+```
+
+
+Create the model
+```{r}
+
+modelo <- nnet(tipo~., data = taprendiz, size=4, rang= 0.1, decay=5e-4, maxit=200, trace= FALSE)
+modelo
+
+```
+
+
+The Prediction
+```{r }
+prediction<- predict(modelo, ttesting[,-5], type = "class")
+head(prediction)
+
+```
+
+
+Create the confusion matrix
+```{r }
+matriz.conf<- table(ttesting[,5], prediction)
+matriz.conf
+
+
+```
+
+Hits Percentage
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+The error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
+
+
+#Save the model on the drive for later :) 
+
+
+Load the Datas
+```{r }
+library(nnet)
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/iris.csv", sep = ";", dec = ".", header = TRUE)
+head(datos)
+```
+
+```{r}
+summary(datos)
+
+```
+
+the samples are generated
+```{r}
+
+#Generamos muestra al azar
+muestra<- sample(1:150, 50)
+#tabla de testing
+ttesting<-datos[muestra,]
+#tabla de aprendizake
+taprendiz <- datos[-muestra,]
+
+```
+
+
+Build the model
+
+```{r}
+
+modelo <- nnet(tipo~., data = taprendiz, size=4, rang= 0.1, decay=5e-4, maxit=20, trace= FALSE)
+modelo
+
+```
+
+
+#save
+
+```{r}
+save(modelo, file = "modelos_redes_iris.rda")
+
+```
+
+#We can retrieve our model with load
+
+```{r}
+load("modelos_redes_iris.rda")
+
+```
+
+
+
+The Prediction:
+
+```{r }
+prediction<- predict(modelo, ttesting[,-5], type = "class")
+head(prediction)
+
+```
+
+the confusion matrix
+```{r }
+matriz.conf<- table(ttesting[,5], prediction)
+matriz.conf
+
+
+```
+
+hits Percentages
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+Error:
+
+```{r }
+error<- 1 - aciertos
+error
+```
+
+
