@@ -1,0 +1,653 @@
+---
+title: "Descriptive methods in Datamining with R"
+author: "Armand"
+date: "13 de julio de 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+##Some Example of Descriptive methods in Datamining with R
+
+Example "Students"
+```{r estudiantes}
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/notas.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de las componentes principales
+modelo <- prcomp(datos)
+modelo
+
+
+```
+
+## Ploting
+
+Making the Biplot:
+
+```{r}
+biplot(modelo, ylim= (c(-.6,.6)), xlim= (c(-.6,.6)))
+```
+
+Example "Customer Support"
+Making the Principal Component Analysis (PCA) 
+```{r cliente}
+datos2 <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/EjemploClientes.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de las componentes principales
+modelo2 <- prcomp(datos2)
+modelo2
+
+
+```
+
+
+The Biplot:
+
+```{r, echo=FALSE}
+biplot(modelo2, ylim= (c(-.5,.5)), xlim= (c(-.5,.5)))
+```
+
+
+
+#Example of PCA on FactoMineR
+
+Example "Students"
+```{r}
+suppressMessages(library(FactoMineR))
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/notas.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de las componentes principales
+modelo <- PCA(datos, scale.unit = TRUE, ncp=5, graph = FALSE)
+plot(modelo, axes=c(1,2), choix="ind", col.ind="red", new.plot= TRUE)
+
+
+```
+
+#Ploting the Vars
+```{r, echo=FALSE}
+plot(modelo, axes=c(1,2), choix="var", col.var="navy", new.plot= TRUE)
+```
+
+
+looking at the Individuals
+```{r, echo=FALSE}
+#imprimir diversos valores de los Individuos
+modelo$ind
+modelo$var
+```
+
+#Poorly represented individuals
+
+```{r, echo=FALSE}
+#se suman solo los 2 primeras columnas del cos2
+cos2.ind <- (modelo$ind$cos2[,1] + modelo$ind$cos2[,2])*100
+#los individuos mal representados son aquellos con valos muy bajos
+cos2.ind
+
+```
+
+#Example "Customer Support"
+
+```{r}
+suppressMessages(library(FactoMineR))
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/EjemploClientes.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de las componentes principales
+modelo2 <- PCA(datos, scale.unit = TRUE, ncp=5, graph = FALSE)
+plot(modelo2, axes=c(1,2), choix="ind", col.ind="red", new.plot= TRUE)
+
+
+```
+
+Plotting
+
+```{r, echo=FALSE}
+plot(modelo2, axes=c(1,2), choix="var", col.var="navy", new.plot= TRUE)
+```
+
+
+Results of Individuals
+```{r, echo=FALSE}
+#imprimir diversos valores de los Individuos
+modelo2$ind
+```
+
+#put away the Poorly represented individuals
+
+```{r, echo=FALSE}
+#se suman solo los 2 primeras columnas del cos2
+cos2.ind <- (modelo2$ind$cos2[,1] + modelo2$ind$cos2[,2])*100
+#los individuos mal representados son aquellos con valos muy bajos
+cos2.ind
+
+```
+
+Plotting without the Poorly represented individuals
+
+
+```{r}
+#Se selecciona de los datos los individuos (ind) cuyos cos2 sean mayores a 0.1 
+plot(modelo2, axes = c(1,2), choix = "ind", col.ind = "red", new.plot = TRUE, select = "cos2 0.1")
+
+```
+
+
+
+## Example Clustering Hierarchy 
+
+Students
+
+```{r}
+
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/notas.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de los cluster usando salto maximo
+modelo <- hclust(dist(datos), method = "complete")
+
+#Graficamos
+plot(modelo)
+
+
+```
+
+Plotting with 3 clusters
+```{r}
+plot( modelo, hang = -1)
+rect.hclust(modelo, k =3, border = "red")
+
+```
+
+Examnple "Students", HC method: single
+```{r}
+
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/notas.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de los cluster usando salto minimo
+modelo <- hclust(dist(datos), method = "single")
+
+#Graficamos
+plot(modelo)
+
+
+```
+
+
+Plotting with 3 Clusters
+```{r}
+plot( modelo, hang = -1)
+rect.hclust(modelo, k =3, border = "red")
+
+```
+
+
+Examnple "Students", HC method: average
+```{r}
+
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/notas.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de los cluster usando salto maximo
+modelo <- hclust(dist(datos), method = "average")
+
+#Graficamos
+plot(modelo)
+
+
+```
+
+Plotting with 3 clusters
+```{r}
+plot( modelo, hang = -1)
+rect.hclust(modelo, k =3, border = "green")
+
+```
+
+
+#Saving assigning cluster and individuals
+```{r}
+#cortamos el arbol con k cluesteres
+grupo <- cutree(modelo, k=3)
+
+#lo agregamos a la tabla
+ndatos<- cbind(datos, grupo)
+ndatos
+
+```
+
+
+#Save the file as .csv
+
+```{r}
+
+write.csv(ndatos, "notas-grupos.csv")
+
+
+```
+
+
+#Making Clustering over PCA
+
+example "Students"
+
+
+```{r}
+suppressMessages(library(FactoMineR))
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/notas.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de las componentes principales
+modelo <- PCA(datos, scale.unit = TRUE, ncp=3, graph = FALSE)
+modelo.hcpc <- HCPC(modelo, nb.clust = -1, consol = TRUE, min = 3, max=3, graph = FALSE)
+
+plot.HCPC(modelo.hcpc, choice = "bar")
+
+
+```
+Como se observa solo tiene sentido elegir las componentes 1 y 2 o 2 y 3
+as we can see only matters the componets: 1 and 2; or  2 and 3
+
+plotting to see the clusters
+```{r}
+plot.HCPC(modelo.hcpc, choice = "map")
+
+
+
+```
+
+3d-Plotting
+```{r}
+
+plot(modelo.hcpc)
+
+
+```
+
+
+
+#Analysis
+
+Example students
+```{r}
+
+library(rattle)
+
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/notas.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+#calculo de los cluster usando salto promedio
+modelo <- hclust(dist(datos), method = "average")
+centros <- centers.hclust(datos, modelo, nclust = 3, use.median = FALSE  )
+centros
+
+```
+
+
+Plotting
+
+```{r}
+rownames(centros)<- c("cluster1", "cluster2", "cluster3")
+barplot(centros[1,], las =2, col=c(2,3,4,5))
+centros
+```
+
+
+Making the barplot on every cluster
+```{r}
+barplot(t(centros), beside = TRUE,  las =2, col=c(2,3,4,5,6))
+
+
+```
+
+
+#another Charts i,e: radarChart
+
+```{r}
+#cargamos paquete para usar radarchat
+library(fmsb)
+centros<- as.data.frame(centros)
+maxi <- apply(centros, 2, max)
+mini <- apply(centros, 2, min)
+centros <- rbind(mini, centros)
+centros <- rbind(maxi, centros)
+
+radarchart(centros, maxmin = TRUE, axistype = 4, axislabcol = "slategray4",  centerzero = FALSE, seg=8, cglcol = "gray4", pcol=c("green","blue", "red"), plty = 1, plwd = 5, title="Comparacion Clusteres")
+legenda <- legend(1.5,1, legend= c("cluster1", "cluster2", "cluster3"), seg.len=-1.4, title = "Clusteres", pch = 21, bty= "n", lwd = 3, y.intersp = 1, horiz = FALSE, col = c("green","blue", "red"))
+
+```
+  
+
+##Customer Support Example
+```{r}
+suppressMessages(library(FactoMineR))
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/EjemploClientes.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+
+#Escalamos los datos de Edad
+datos$Edad<- datos$Edad/10
+#Cluatering con el metodo ward
+modelo2 <-  hclust(dist(datos), method = "ward")
+plot(modelo2, las=1)
+
+
+```
+
+Caluclate the center of the clusters
+```{r}
+centros <- centers.hclust(datos, modelo2, nclust = 3, use.median = FALSE  )
+centros
+```
+
+Plotting
+
+```{r}
+rownames(centros)<- c("cluster1", "cluster2", "cluster3")
+barplot(centros[1,], las =2, col=c(2:13))
+centros
+```
+
+Group by cluster and Plotting
+```{r}
+barplot(t(centros), beside = TRUE, col=c(2:13), ylim = c(0,30))
+legend("topright", legend=colnames(datos),
+       col=c(2:13), pch=15, cex=0.8)
+
+```
+
+
+
+
+#RadarChart
+
+```{r}
+#cargamos paquete para usar radarchat
+library(fmsb)
+centros<- as.data.frame(centros)
+maxi <- apply(centros, 2, max)
+mini <- apply(centros, 2, min)
+centros <- rbind(mini, centros)
+centros <- rbind(maxi, centros)
+
+radarchart(centros, maxmin = TRUE, axistype = 4, axislabcol = "slategray4",  centerzero = FALSE, seg=8, cglcol = "gray4", pcol=c("green","blue", "red"), plty = 1, plwd = 5, title="Comparacion Clusteres")
+legenda <- legend("topright", legend= c("cluster1", "cluster2", "cluster3"), seg.len=-1.4, title = "Clusteres", pch = 21, bty= "n", lwd = 2, y.intersp = 1, horiz = FALSE, col = c("green","blue", "red"),cex=0.8 )
+
+```
+
+
+# K-means example
+
+
+```{r}
+suppressMessages(library(FactoMineR))
+#Cargamos los datos
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/Ej1kmeans.csv", header = FALSE, sep = ";")
+
+datos
+
+```
+
+
+
+Plotting
+
+```{r}
+#agrupamos por el metodo kmeans
+grupos<- kmeans(datos, 2, iter.max = 100)
+grupos
+
+```
+
+
+
+Seeing the Group of each individual
+```{r}
+#el cluster de Cada individuo
+grupos$cluster
+```
+
+
+```{r}
+#el centro de gravedad
+grupos$centers
+```
+
+
+```{r}
+#Inercia total
+grupos$totss
+```
+
+```{r}
+#Inercia intra-clases
+grupos$withinss
+```
+
+```{r}
+#Tama?o de las clases
+grupos$size
+```
+
+Adding Color to the Chart
+```{r}
+plot(datos, pch=19, xlab=expression(x[1]), ylab= expression(x[2]))
+
+points(grupos$centers, pch=19, col="blue", cex=2)
+points(datos, col=grupos$cluster +1, pch=19)
+```
+
+Barplot on gravity center
+```{r}
+#Tama?o de las clases
+barplot(grupos$centers[1,], col = "navy", ylim=c(0,1.3))
+```
+
+
+
+# k-mean Customer Support Example
+
+```{r}
+suppressMessages(library(FactoMineR))
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/EjemploClientes.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+
+#Escalamos los datos de Edad
+datos$Edad<- datos$Edad/10
+
+
+
+```
+
+
+Plotting
+
+```{r}
+
+#agrupamos por el metodo kmeans
+grupos<- kmeans(datos, 3, iter.max = 1000)
+grupos
+
+
+# distance matrix
+datos_dist <- dist(datos)
+
+# Multidimensional scaling
+cmd <- cmdscale(datos_dist)
+
+# plot MDS, with colors by groups from kmeans
+groups <- levels(factor(grupos$cluster))
+plot(cmd, type = "n")
+cols <- c("steelblue", "darkred", "darkgreen")
+for(i in seq_along(groups)){
+  points(cmd[factor(grupos$cluster) == groups[i], ], col = cols[i], pch = 16)
+}
+
+```
+
+
+
+
+Checking some values, like groups, inertial center, size, etc
+```{r}
+#el cluster de Cada individuo
+grupos$cluster
+```
+
+
+```{r}
+#el centro de gravedad
+grupos$centers
+```
+
+
+```{r}
+#Inercia total
+grupos$totss
+```
+
+```{r}
+#Inercia intra-clases
+grupos$withinss
+```
+
+```{r}
+#Tama?o de las clases
+grupos$size
+```
+
+barplot of center 1
+```{r}
+#Tama?o de las clases
+barplot(grupos$centers[1,], col = c(1:12), las=2)
+```
+
+Group by cluster
+```{r}
+rownames(grupos$centers)<- c("cluster1", "cluster2", "cluster3")
+barplot(t(grupos$centers), beside = TRUE, col=c(2:13), ylim = c(0,30))
+legend("topright", legend=colnames(datos),
+       col=c(2:13), pch=15, cex=0.8)
+
+```
+
+
+Radarchart
+```{r}
+#cargamos paquete para usar radarchat
+library(fmsb)
+centros <- grupos$centers
+centros<- as.data.frame(centros)
+maxi <- apply(centros, 2, max)
+mini <- apply(centros, 2, min)
+centros <- rbind(mini, centros)
+centros <- rbind(maxi, centros)
+
+radarchart(centros, maxmin = TRUE, axistype = 4, axislabcol = "slategray4",  centerzero = FALSE, seg=8, cglcol = "gray4", pcol=c("green","blue", "red"), plty = 1, plwd = 5, title="Comparacion Clusteres")
+legenda <- legend("topright", legend= c("cluster1", "cluster2", "cluster3"), seg.len=-1.4, title = "Clusteres", pch = 21, bty= "n", lwd = 2, y.intersp = 1, horiz = FALSE, col = c("green","blue", "red"),cex=0.8 )
+
+```
+
+
+### The k-mean algorithm has as default that every time you run has a different result, in addition we must tell you the number of iterations
+
+# Strong ways to achieve better solutions in kmedias
+
+example Customer support, 
+#### trick nstart= 200 and find the best solution
+
+```{r}
+suppressMessages(library(FactoMineR))
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/EjemploClientes.csv", header = TRUE, sep = ";", dec = ",",  row.names=1)
+
+#Escalamos los datos de Edad
+datos$Edad<- datos$Edad/10
+
+
+
+```
+
+
+K-means, nstart= 200
+
+```{r}
+
+#agrupamos por el metodo kmeans
+grupos<- kmeans(datos, 3, iter.max = 300, nstart = 200)
+grupos
+
+
+# distance matrix
+datos_dist <- dist(datos)
+
+# Multidimensional scaling
+cmd <- cmdscale(datos_dist)
+
+# plot MDS, with colors by groups from kmeans
+groups <- levels(factor(grupos$cluster))
+plot(cmd, type = "n")
+cols <- c("steelblue", "darkred", "darkgreen")
+for(i in seq_along(groups)){
+  points(cmd[factor(grupos$cluster) == groups[i], ], col = cols[i], pch = 16)
+}
+
+```
+
+```{r}
+#cargamos paquete para usar radarchat
+library(fmsb)
+centros <- grupos$centers
+centros<- as.data.frame(centros)
+maxi <- apply(centros, 2, max)
+mini <- apply(centros, 2, min)
+centros <- rbind(mini, centros)
+centros <- rbind(maxi, centros)
+
+radarchart(centros, maxmin = TRUE, axistype = 4, axislabcol = "slategray4",  centerzero = FALSE, seg=8, cglcol = "gray4", pcol=c("green","blue", "red"), plty = 1, plwd = 5, title="Comparacion Clusteres")
+legenda <- legend("topright", legend= c("cluster1", "cluster2", "cluster3"), seg.len=-1.4, title = "Clusteres", pch = 21, bty= "n", lwd = 2, y.intersp = 1, horiz = FALSE, col = c("green","blue", "red"),cex=0.8 )
+
+```
+
+save the data on a .csv file
+
+```{r}
+ ndatos <- cbind(datos, grupos=grupos$cluster)
+write.csv(ndatos, "ndatos.csv")
+```
+
+##Q: How many clusters should be made ??
+###A: It is chosen by the jambu elbow
+
+```{r}
+InerciaK = rep(0, 30)
+
+for (k in 1:30) {
+    grupos = kmeans(datos, k)
+    InerciaK[k] = grupos$tot.withinss
+    
+}
+plot(InerciaK, col = "blue", type = "b", xlim =c(0,15))
+```
+
+
+
+
+# Clustering with qualitative variables and variable mix?  
+##Kmean or hclust does not work Daysi should be used
+
+Example
+
+```{r}
+library(cluster)
+
+datos <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/1/SAheart.csv", header = TRUE, sep = ",", dec = ".", row.names = 1)
+
+head(datos)
+dim(datos)
+
+
+```
+
+Build the Daisy
+```{r}
+d<-daisy(datos, metric = "euclidean")
+  
+
+```
+
+and then clusteting and plotting
+```{r}
+clus<- hclust(d, method = "complete")
+plot(clus)
+rect.hclust(clus, k=4, border = "red")
+
+```
+
+
+
