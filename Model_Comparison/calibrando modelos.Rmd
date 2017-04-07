@@ -1,0 +1,467 @@
+---
+title: "Calibrando Modelos"
+author: "Armand"
+date: "16 de julio de 2016"
+output: html_document
+---
+
+#Modelos descriptivos 
+##Calibrando k-medias
+
+```{r}
+
+
+library(kknn)
+suppressMessages(library(e1071))
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/exploratorios/2/EjemploClientes.csv", sep = ";", dec = ",", header = TRUE, row.names = 1)
+
+dim(datos)
+
+```
+
+
+##Proceso para Comparar algoritmos que utiliza el K-medias
+
+
+```{r}
+
+inercia.hart <- rep(0, 30)
+inercia.lloyd <- rep(0, 30)
+inercia.forgy <- rep(0, 30)
+inercia.macq <- rep(0, 30)
+
+for (k in 1:30) {
+  grupos = kmeans(datos, k, iter.max = 100, algorithm = "Hartigan-Wong")
+  inercia.hart[k]= grupos$tot.withins
+  grupos = kmeans(datos,k ,iter.max = 100, algorithm = "Lloyd")
+  inercia.lloyd[k] = grupos$tot.withins
+  grupos = kmeans(datos, k ,iter.max = 100, algorithm = "Forgy")
+  inercia.forgy[k] = grupos$tot.withins
+  grupos = kmeans(datos, k ,iter.max = 100, algorithm = "MacQueen")
+  inercia.macq[k] = grupos$tot.withins
+  
+  
+}
+
+```
+
+
+##Graficamos los resultados
+
+
+```{r}
+
+plot(inercia.hart, col= "violet", type="b")
+points(inercia.lloyd, col = "steelblue2", type = "b")
+points(inercia.forgy, col = "palegreen1", type = "b")
+points(inercia.macq, col ="red", type = "b")
+legend("topright", legend = c("Hart", "Lloyd", "Forgy", "Macqueen"), lty = 5, lwd = 5, cex = .7, col = c("violet", "steelblue2", "palegreen1", "red"))
+
+
+
+
+```
+
+
+####Del graficco obtenemos que k optimo es 4, k = 4
+
+Ahora Ejecutamos nuevamente 50 iteraciones de cada algoritmo para promediar las inercias y seleccionar el mejor
+
+
+```{r}
+
+
+library(kknn)
+suppressMessages(library(e1071))
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/exploratorios/2/EjemploClientes.csv", sep = ";", dec = ",", header = TRUE, row.names = 1)
+
+dim(datos)
+
+```
+
+
+##Proceso para Comparar algoritmos que utiliza el K-medias ejecutamos 50 veces con k =4
+
+
+```{r}
+
+in.hart <- 0
+in.lloyd <- 0
+in.forgy <- 0
+in.macq <- 0
+k = 4
+for (i in 1:50) {
+  grupos = kmeans(datos, k, iter.max = 100, algorithm = "Hartigan-Wong")
+  in.hart= grupos$betweenss + in.hart
+  grupos = kmeans(datos,k ,iter.max = 100, algorithm = "Lloyd")
+  in.lloyd = grupos$betweenss + in.lloyd
+  grupos = kmeans(datos, k ,iter.max = 100, algorithm = "Forgy")
+  in.forgy = grupos$betweenss + in.forgy
+  grupos = kmeans(datos, k ,iter.max = 100, algorithm = "MacQueen")
+  in.macq = grupos$betweenss + in.macq
+  
+  
+}
+
+```
+
+
+### Comparamos las inercias
+
+```{r}
+#inercias Hart
+in.hart/50
+```
+
+```{r}
+#inercia Lloyd
+in.lloyd/50
+```
+
+```{r}
+#inercia Forgy
+in.forgy/50
+
+```
+
+```{r}
+#inercia Macqueen
+in.macq/50
+```
+
+
+
+##Graficamos los resultados
+
+
+```{r}
+
+plot(inercia.hart, col= "violet", type="b")
+points(inercia.lloyd, col = "steelblue2", type = "b")
+points(inercia.forgy, col = "palegreen1", type = "b")
+points(inercia.macq, col ="red", type = "b")
+legend("topright", legend = c("Hart", "Lloyd", "Forgy", "Macqueen"), lty = 5, lwd = 5, cex = .7, col = c("violet", "steelblue2", "palegreen1", "red"))
+
+
+
+
+```
+
+
+
+
+
+#Modelos Predictivos
+
+###Calibrando SVM con datos scoring
+
+Leemos los datos
+```{r}
+library(caret)
+suppressMessages(library(e1071))
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv", sep = ";", dec = ".", header = TRUE)
+ttesting <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv", sep = ";", header = TRUE)
+
+dim(datos)
+
+#tabla de aprendizake 
+taprendiz <- datos
+
+```
+
+### Formamos una sola tabla a partir de todos los datos
+
+```{r}
+datos <- rbind(taprendiz, ttesting)
+
+
+```
+
+verificamos los datos
+
+```{r}
+
+summary(datos)
+
+
+```
+
+
+### Se usará validacion cruzada con k-folds
+
+```{r}
+
+n <- dim(datos)[1]
+
+detec.no.radial <- rep(0,5)
+detec.no.linear <- rep(0,5)
+detec.no.poly <- rep(0,5)
+detec.no.sigmoid <- rep(0,5)
+
+#ejecutamos 5 veces
+for (i in 1:5) {
+  #Se crean 10 grupos 
+  grupos <- createFolds(1:n, 10)
+  no.radial <- 0
+  no.linear <- 0
+  no.poly <- 0
+  no.sigmoid <- 0
+  #aqui se hace la cross validation con k- 10
+  for (k in 1:10) {
+    muestra <- grupos[[k]]
+    ttesting <- datos[muestra,]
+    taprendiz <- datos[-muestra,]
+    modelo <- svm(BuenPagador~., data= taprendiz, kernel = "radial")
+    prediccion <- predict(modelo, ttesting)
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.radial <- no.radial + MC[1,1]
+
+    #con el Kernel linear
+    modelo <- svm(BuenPagador~., data= taprendiz, kernel = "linear")
+    prediccion <- predict(modelo, ttesting)
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.linear <- no.linear + MC[1,1]
+    
+    #Con el kernel Polynomial
+    
+    modelo <- svm(BuenPagador~., data= taprendiz, kernel = "polynomial")
+    prediccion <- predict(modelo, ttesting)
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.poly <- no.poly + MC[1,1]
+
+    #Con el Kernel sigmoid
+    
+    modelo <- svm(BuenPagador~., data= taprendiz, kernel = "sigmoid")
+    prediccion <- predict(modelo, ttesting)
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.sigmoid <- no.sigmoid + MC[1,1]
+
+        
+  }
+  
+  detec.no.radial[i] <- no.radial
+  detec.no.poly[i] <- no.poly
+  detec.no.linear[i] <- no.linear
+  detec.no.sigmoid[i] <- no.sigmoid
+  
+}
+
+
+```
+
+
+
+
+
+##Graficamos los resultados
+
+
+```{r}
+
+plot(detec.no.radial, col= "violet", type="b", ylab = "No Pagadores Detectados", xlab= "# Interaciones", main = "Deteccion de NO pagador en SVM", ylim = c(min(detec.no.sigmoid,detec.no.poly,detec.no.linear,detec.no.radial), max(detec.no.sigmoid,detec.no.poly, detec.no.linear, detec.no.radial)+100))
+points(detec.no.linear, col = "steelblue2", type = "b")
+points(detec.no.poly, col = "palegreen1", type = "b")
+points(detec.no.sigmoid, col ="red", type = "b")
+legend("topright", legend = c("Radial", "Linear", "Polynomial", "Sigmoid"), lty = 2, lwd = 2, cex = .7, col = c("violet", "steelblue2", "palegreen1", "red"))
+
+
+
+
+```
+
+
+####De la grafica Observamos que el mejor metodo para este caso es el Radial
+
+
+#Ahora Vamos a Seleccionar el Mejor Metodo para
+
+Partimos del hecho que ya fueron calibrados
+
+
+
+```{r}
+
+suppressMessages(library(e1071))
+suppressMessages(library(kknn))
+suppressMessages(library(MASS))
+suppressMessages(library(class))
+suppressMessages(library(rpart))
+suppressMessages(library(randomForest))
+suppressMessages(library(ada))
+suppressMessages(library(nnet))
+suppressMessages(library(caret))
+
+
+
+
+```
+
+Leemos los datos
+```{r}
+library(caret)
+suppressMessages(library(e1071))
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv", sep = ";", dec = ".", header = TRUE)
+ttesting <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv", sep = ";", header = TRUE)
+
+dim(datos)
+
+#tabla de aprendizake 
+taprendiz <- datos
+
+```
+
+### Formamos una sola tabla a partir de todos los datos
+
+```{r}
+datos <- rbind(taprendiz, ttesting)
+
+
+```
+
+###Implementacion de los modelos
+
+
+```{r Seleccion de Metodos}
+
+
+n <- dim(datos)[1]
+
+detec.no.svm <- rep(0,5)
+detec.no.knn <- rep(0,5)
+detec.no.bayes <- rep(0,5)
+detec.no.arbol <- rep(0,5)
+detec.no.bosque <- rep(0,5)
+detec.no.potenciacion <- rep(0,5)
+detec.no.redn <- rep(0,5)
+
+#ejecutamos 5 veces
+for (i in 1:5) {
+  #Se crean 10 grupos 
+  grupos <- createFolds(1:n, 10)
+  no.knn <- 0
+  no.bayes <- 0
+  no.arbol <- 0
+  no.bosque <- 0
+  no.potenciacion <- 0
+  no.redn <- 0
+  no.svm <- 0
+  #aqui se hace la cross validation con k- 10
+  for (k in 1:10) {
+    muestra <- grupos[[k]]
+    ttesting <- datos[muestra,]
+    taprendiz <- datos[-muestra,]
+    #Modelos con SVM
+    modelo <- svm(BuenPagador~., data= taprendiz, kernel = "radial")
+    prediccion <- predict(modelo, ttesting)
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.svm <- no.svm + MC[1,1]
+
+    #con el bayes
+    modelo <- naiveBayes(BuenPagador~., data= taprendiz)
+    prediccion <- predict(modelo, ttesting[1:5])
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.bayes <- no.bayes + MC[1,1]
+    
+    #Con el knn
+    
+    modelo <- train.kknn(BuenPagador~., data= taprendiz, kmax = 7)
+    prediccion <- predict(modelo, ttesting[,-6])
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.knn <- no.knn + MC[1,1]
+
+    #Con el arbol
+    
+    modelo <- rpart(BuenPagador~., data= taprendiz)
+    prediccion <- predict(modelo, ttesting, type = "class")
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.arbol <- no.arbol + MC[1,1]
+
+
+    #Con el bosque
+    
+    modelo <- randomForest(BuenPagador~., data= taprendiz, importance= TRUE)
+    prediccion <- predict(modelo, ttesting[,-6])
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.bosque <- no.bosque + MC[1,1]
+
+    
+    #Con el Metodo Potenciacion
+    
+    modelo <- ada(BuenPagador~., data= taprendiz, iter = 20, nu =1, type = "discrete")
+    prediccion <- predict(modelo, ttesting[,-6])
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.potenciacion <- no.potenciacion + MC[1,1]
+
+    
+    #Con redes
+    
+    modelo <- nnet(BuenPagador~., data= taprendiz, size=5, decay = 5e-4, maxit =100, trace = FALSE) 
+    prediccion <- predict(modelo, ttesting[,-6], type = "class")
+    actual <- ttesting[,6]
+    MC <- table(actual, prediccion)
+    #Deteccion de no pagadores
+    no.redn <- no.redn + MC[1,1]
+
+        
+  }
+  
+  detec.no.redn[i] <- no.redn
+  detec.no.potenciacion[i] <- no.potenciacion
+  detec.no.bosque[i] <- no.bosque
+  detec.no.arbol[i] <- no.arbol
+  detec.no.bayes[i] <- no.bayes
+  detec.no.knn[i] <- no.knn
+  detec.no.svm[i] <- no.svm
+  
+}
+
+
+
+
+
+```
+
+
+#Graficamos el Resultado de cada metodo
+
+
+
+
+```{r}
+
+plot(detec.no.redn, col= "violet", type="b", ylab = "No Pagadores Detectados", xlab= "# Iteraciones", main = "Deteccion de NO pagador en SVM", ylim = c(min(detec.no.redn,detec.no.potenciacion,detec.no.bosque,detec.no.arbol, detec.no.knn, detec.no.bayes, detec.no.svm), max(detec.no.redn,detec.no.potenciacion,detec.no.bosque,detec.no.arbol, detec.no.knn, detec.no.bayes, detec.no.svm)+100))
+points(detec.no.potenciacion, col = "steelblue2", type = "b")
+points(detec.no.bosque, col = "palegreen1", type = "b")
+points(detec.no.arbol, col ="red", type = "b")
+points(detec.no.bayes, col = "gold4", type = "b")
+points(detec.no.knn, col = "navy", type = "b")
+points(detec.no.svm, col ="yellow2", type = "b")
+legend("topright", legend = c("Red Neural", "Potenciación", "Bosque Aleatorio", "Arbol", "Bayes", "KNN", "SVM"), lty = 1, lwd = 3, cex = .7, col = c("violet", "steelblue2", "palegreen1", "red", "gold4", "navy", "yellow2"))
+
+
+
+
+```
+
+
+Notas: se debe Agregar el calculo de error para conseguir el de menor error
