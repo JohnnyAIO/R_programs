@@ -1,0 +1,338 @@
+---
+title: "calibracion cross validation boostrapping"
+author: "Armand"
+date: "15 de julio de 2016"
+output: html_document
+---
+
+#Cross Validation
+
+##Ejemplo con iris todos los datos
+
+Primero calculamos el error con todos los datos para comparar
+```{r }
+library(kknn)
+
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/iris.csv", sep = ";", dec = ".", header = TRUE)
+
+#Prediccion en toda la tablar
+v.error.tc <- rep(0, 10)
+
+for (i in 1:10) {
+  
+  modelo<- train.kknn(tipo~., data = datos, kmax = 5)
+  prediction <- predict(modelo, datos[,-5])
+  #matrix de confusion
+  MC <- table(datos[,5], prediction)
+  aciertos <- sum(diag(MC))/sum(MC)
+  error <- 1 - aciertos
+  v.error.tc [i]= error
+  
+}
+
+plot(v.error.tc, col="navy", type = "b")
+
+
+
+```
+
+## Con el metodo LOOCV
+
+
+```{r }
+
+v.error.loo <- rep(0, 10)
+n <- dim(datos)[1]
+
+#Se corre el Metodo 10 veces
+for (i in 1:10) {
+  error.i <- 0
+  
+  for (j in 1:n) {
+    
+    muestra<- j
+    ttesting <- datos[muestra,]
+    taprendizaje <- datos[-muestra,]
+    modelo<- train.kknn(tipo~., data = taprendizaje, kmax = 5)
+    prediction <- predict(modelo, ttesting[,-5])
+  
+    if ( prediction != ttesting$tipo)
+      error.i <- error.i +1
+  
+      }
+  #se calcula el error lOOC
+  v.error.loo[i]<- error.i/n
+  
+}
+
+plot(v.error.loo, col="red", type = "b", ylim = c(0, 0.2))
+
+
+```
+el problema de este metodo es que dura demasiado
+
+
+#Con el Cross Validation
+
+
+```{r }
+suppressMessages(library(caret))
+v.error.kg <- rep(0, 10)
+
+n <- dim(datos)[1]
+
+#Se corre el Metodo 10 veces
+for (i in 1:10) {
+  error.i <- 0
+
+  #Esta instruccion genera los grupos K=5 (folds)
+  # es decir dividir la tabla de datos en 5 grupos
+  grupos <- createFolds(1:n,5)
+  for (k in 1:5) {
+    
+    muestra<- grupos[[k]]#al ser una muestra requiere doble parentesis
+    ttesting <- datos[muestra,]
+    taprendizaje <- datos[-muestra,]
+    modelo<- train.kknn(tipo~., data = taprendizaje, kmax = 5)
+    prediction <- predict(modelo, ttesting[,-5])
+  
+    matriz.conf<- table(ttesting[,5], prediction)
+    aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+    error<- 1 - aciertos
+    error.i <- error.i +error
+
+
+      }
+  #se calcula el error lOOC
+  v.error.kg[i]<- error.i/5
+  
+}
+
+```
+
+#Realizamos  el Grafico Comparativo
+```{r}
+
+
+plot(v.error.tc, col="navy", type="b", ylim=c(min(v.error.kg,v.error.loo,v.error.tc), max(v.error.kg, v.error.loo, v.error.tc)+ 0.05), main = "Variacion del Error", xlab="Número de interaciones", ylab = "Estimación de Error")
+points(v.error.loo, col="red", type = "b")
+points(v.error.kg, col="pink", type = "b")
+legend("topright", legend = c("Tabla completa", "Uno Fuera LOOCV", "K-ésimo Grupo"), col = c("navy","pink","red"), lty = 1, lwd= 1, cex = .7)
+
+```
+
+### Y comparamos los errores
+
+```{r}
+# Error con todos los datos
+mean(v.error.tc)
+
+```
+
+```{r}
+#Error con el metod LOOC
+
+mean(v.error.loo)
+```
+
+
+```{r}
+#Error con el Metodo k-folds
+
+mean(v.error.kg)
+
+```
+ El metodo K- fols es el mejor en terminos computo/precision
+
+
+
+#Ejemplo Graficos con ggplot
+
+```{r}
+library(ggplot2)
+dt <- as.data.frame(v.error.kg)
+dt <- cbind(dt, v.error.loo, v.error.tc)
+ggplot() + 
+  geom_line(data = dt, aes(y = v.error.kg, x = c(1:nrow(dt)), color = "Error KG")) +
+  geom_line(data = dt, aes(y = v.error.tc, x = c(1:nrow(dt)), color = "tabla Completa"))+
+  geom_line(data = dt, aes(y = v.error.loo, x = c(1:nrow(dt)), color = "LOOCV"))  +
+  xlab('# Iteraciones') +
+  ylab('Estimacion del Error')+
+    labs(color="Leyenda")
+
+```
+
+
+Formamos la matriz de confusion
+
+```{r }
+matriz.conf<- table(ttesting[,5], prediction)
+matriz.conf
+
+
+```
+
+Porcentaje de acierto
+
+```{r }
+aciertos<- sum(diag(matriz.conf))/sum(matriz.conf)
+aciertos
+
+```
+
+y el error:
+
+```{r }
+error<- 1 - aciertos
+error
+
+```
+
+
+#Ejemplo ROC con SVM y Arboles la tabla de Scoring
+
+Cargamos los datos
+```{r }
+library(kknn)
+suppressMessages(library(e1071))
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraAprendizajeCredito2500.csv", sep = ";", dec = ".", header = TRUE)
+ttesting <- read.table("C:/Users/Usuario/Desktop/promidat/calibracion_y_seleccion/2/MuestraTestCredito2500.csv", sep = ";", header = TRUE)
+
+dim(datos)
+
+#tabla de aprendizake 
+taprendiz <- datos
+
+```
+
+Generamos el modelo SVM
+```{r}
+
+modelo <- svm(BuenPagador~., data = taprendiz)
+prediction <- predict(modelo, ttesting)
+head(prediction)
+```
+
+##Para Realizar la Curva ROC es necesarios que el modelo nos genera la probabilidad
+
+```{r}
+
+
+modelo <- svm(BuenPagador~., data = taprendiz, probability=TRUE)
+prediction <- predict(modelo, ttesting, probability = TRUE)
+scores <- attributes(prediction)$probabilities[,1]
+head(scores)
+
+```
+
+##Funcion para graficar el ROC 
+
+```{r}
+
+suppressMessages(library(ROCR))
+plotROC <- function(prediccion,real,adicionar=FALSE,color="red") {
+  pred <- prediction(prediccion,real)    
+  perf <- performance(pred,"tpr","fpr")
+  plot(perf,col=color,add=adicionar,main="Curva ROC")
+  segments(0,0,1,1,col='black')
+  grid()  
+}
+
+```
+
+##Funcion Para calcular el area bajo la curva
+```{r}
+
+areaROC <- function(prediccion,real) {
+  pred <- prediction(prediccion,real)
+  auc<-performance(pred,"auc")
+  return(attributes(auc)$y.values[[1]])
+}
+```
+
+
+
+#Graficamos el ROC y calculamos el area bajo la curva
+
+```{r}
+
+clase <- ttesting$BuenPagador
+plotROC(scores, clase)
+areaROC(scores, clase)
+
+```
+
+
+
+
+convertir las variables 
+
+```{r }
+
+taprendiz$MontoCredito <- as.factor(taprendiz$MontoCredito)
+taprendiz$IngresoNeto <- as.factor(taprendiz$IngresoNeto)
+taprendiz$CoefCreditoAvaluo <- as.factor(taprendiz$CoefCreditoAvaluo)
+taprendiz$MontoCuota <-  as.factor(taprendiz$MontoCuota)
+taprendiz$GradoAcademico <- as.factor(taprendiz$GradoAcademico)
+taprendiz$BuenPagador <- as.factor(taprendiz$BuenPagador)
+
+#convertimos la de la tabla de testing
+ttesting$MontoCredito <- as.factor(ttesting$MontoCredito)
+ttesting$IngresoNeto <- as.factor(ttesting$IngresoNeto)
+ttesting$CoefCreditoAvaluo <- as.factor(ttesting$CoefCreditoAvaluo)
+ttesting$MontoCuota <- as.factor(ttesting$MontoCuota)
+ttesting$GradoAcademico <- as.factor(ttesting$GradoAcademico)
+ttesting$BuenPagador <- as.factor(ttesting$BuenPagador)
+```
+
+
+Implementamos el modelo Arbol 
+```{r}
+suppressMessages(library(rpart))
+#implementamos el modelo
+modelo <- rpart(BuenPagador ~ ., data= taprendiz)
+modelo
+
+```
+
+
+Se realiza la prediccion:
+
+```{r }
+prediction<- predict(modelo, ttesting,  type = "class")
+head(prediction)
+
+```
+
+
+##Necesitamos las probabilidades
+
+```{r}
+prediction<- predict(modelo, ttesting)
+head(prediction)
+
+
+
+```
+
+##Graficamos y calculamos el AUC
+
+```{r}
+clase2 <- ttesting$BuenPagador
+scores2 <- prediction[,2]
+plotROC(scores, clase)
+areaROC(scores, clase)
+plotROC(scores2, clase2, adicionar = TRUE, color = "blue")
+legend("topright", legend = c("ROC con SVM", "ROC con Arbol"), col = c("red", "blue"), lty = 1, lwd = 1, cex = .6)
+
+
+
+
+```
+
+
+```{r}
+areaROC(scores2, clase2)
+
+```
+
