@@ -1,0 +1,162 @@
+---
+title: "Big data with R"
+author: "Armand"
+date: "29 de julio de 2016"
+output: html_document
+---
+
+#Exploring some packages for big data with R
+
+
+###Read Data From file to ff
+
+load the package
+```{r}
+suppressMessages(library(ff))
+suppressMessages(library(ffbase))
+suppressMessages(library(biglm))
+
+```
+
+
+```{r}
+datos <- read.csv.ffdf(file="SAheart.csv", sep=",", header =T, dec =".", row.names=1)
+head(datos)
+```
+
+```{r}
+str(datos)
+
+```
+
+#Regression with Biglm
+
+```{r}
+model <- bigglm(tobacco~ldl, data = datos)
+summary(model)
+
+```
+
+Prediction
+```{r}
+pred <- predict(model, newdata = data.frame(tobacco=c(1.2, 45.8, 100.32), ldl = c(2, 0.24, 0.002)))
+pred
+
+
+```
+It can be done with multiple vars
+
+#Parallel Computing
+
+```{r}
+#load packages snow
+suppressMessages(library(snow))
+suppressMessages(library(MASS))
+```
+
+Load the data
+
+```{r}
+
+dataf <- read.csv("EjemploClientes.csv", header = TRUE, sep = ";", dec = ",", row.names = 1)
+head(dataf)
+
+```
+Normalized the age by dividin by 10
+```{r}
+dataf$Edad <- dataf$Edad/10
+head(dataf)
+
+```
+
+```{r}
+groups <- kmeans(dataf, 4, iter.max = 100, nstart = 100)
+groups
+
+```
+
+inertia
+```{r}
+groups$tot.withinss
+
+```
+
+##Using SNOW for parallelism
+using lapplay 
+```{r}
+clust <- makeCluster(2, type = "SOCK")#2 is for amount of cpu's
+ignore <- clusterEvalQ(clust, {
+  library(MASS)#load mass to every worker node
+  NULL
+})
+
+```
+
+
+apply the snow
+```{r}
+#clust = cluster, 30 = inpust, function = function to be applied
+result <- clusterApply(clust, c(30,30, 30, 30), function(n) kmeans(Boston, 4, nstart = n))
+result
+
+```
+
+Inertias
+```{r}
+iner <- sapply(result, function(result) result$tot.withinss)
+iner
+```
+the best result
+```{r}
+result <- result[[which.min(iner)]]
+result
+```
+stop the clusters
+```{r}
+stopCluster(clust)
+
+```
+
+
+
+#Compare sequential vs parallel time with kmeans 
+
+For sequential
+```{r}
+time1 <- system.time( groups <- lapply(c("Hartigan-Wong","Lloyd","Forgy", "MacQueen"), function(algorit) kmeans(dataf, 3, iter.max = 30000000, nstart = 100000, algorithm = algorit)))
+for (i in 1:4) {
+  print(groups[[i]]$betweenss)
+}
+
+```
+
+Parallel
+
+```{r}
+clust <- makeCluster(2, type = "SOCK")#2 is for amount of cpu's
+ignore <- clusterEvalQ(clust, {
+  dataf <- read.csv("EjemploClientes.csv", header = TRUE, sep = ";", dec = ",", row.names = 1)
+  dataf$Edad <- dataf$Edad/10#load mass to every worker node
+  NULL
+})
+
+time2 <- system.time( groups <- clusterApply(clust, c("Hartigan-Wong","Lloyd","Forgy", "MacQueen"), function(algorit) kmeans(dataf, 3, iter.max = 30000000, nstart = 100000, algorithm = algorit)))
+for (i in 1:4) {
+  print(groups[[i]]$betweenss)
+}
+
+stopCluster(clust)
+```
+
+```{r}
+#Sequential Time:
+time1
+
+```
+
+```{r}
+#Parallel Time
+time2
+
+```
+
