@@ -1,0 +1,316 @@
+---
+title: "Time Series"
+author: "Armand"
+date: "20 de julio de 2016"
+output: html_document
+---
+
+
+#Time Series
+
+Stock data
+```{r}
+datos <- read.csv("stock.csv", header = T, dec = ".", sep =",")
+head(datos)
+
+```
+
+Check de data
+
+```{r}
+
+summary(datos)
+
+```
+we have 6 time series
+
+
+##Plotting data
+```{r}
+#plot the volume column
+plot( datos[,6], type ="l", main = "Volume over time ")
+
+```
+
+
+#plottsing close data
+
+```{r}
+#plot the close column
+plot( datos[,5], type ="l", main = "Close over time ")
+
+
+```
+
+
+#Plotting high price with low price
+
+
+```{r}
+
+#plot the high and low
+plot( datos[,3], type ="l", main = "high vs low price over time ")
+lines(datos[,4], type ="l", col="red")
+
+```
+
+##with ggplot
+
+```{r}
+library(ggplot2)
+ggplot(datos) +xlab("index")+ylab("price")+ geom_line(data =datos, aes(y =High, x = c(1:length(High)) ), color ="red") + geom_line(data =datos, aes(y =Low, x = c(1:length(Low)) )) + ggtitle("Comparison High vs Low prices")
+
+
+```
+
+
+
+##Beer Example 
+
+
+```{r}
+datos_beer <- read.csv("beer.csv", dec = ".", sep =",")
+head(datos_beer)
+colnames(datos_beer) <- c("year", "cant")
+
+```
+
+##create the time series from data frame
+
+```{r}
+#Star year, month, freq = 1 data by month
+beer <- ts(datos_beer[,2], start = c(1956,5), freq=12 )
+beer
+
+```
+
+
+Plotting beer ts
+
+```{r}
+plot(beer, type ="l", col ="blue")
+
+
+```
+
+
+
+##Example with itsmr package
+
+```{r}
+
+library(itsmr)
+head(airpass)
+
+```
+
+convert airpass to ts 
+
+```{r}
+
+airpass <- ts(airpass, start = c(1949, 1), freq = 12)
+plot(airpass, type= "b", col = "pink")
+ 
+
+```
+
+
+
+#Time series:Preliminar Analysis
+
+###Normal Test
+
+```{r}
+#with diff operator
+#dataset stock
+#this plot show atipicals
+datos$Low <- as.numeric(datos$Low)
+
+plot(diff(datos$Low), type ="l", col ="palegreen", main = "diff in time series ", xlim=c(0, 250), ylim = c(-2.5, 4))
+
+
+```
+
+###Ploting with Dates
+
+```{r}
+fechas <- strptime(as.character(datos$Date), "%Y-%m-%d")
+#plot(x =fechas[-252], y = diff(datos$Low), xaxt="n", panel.first =grid(), type ="l", col ="palegreen", main = "diff in time series ")
+plot(diff(datos$Low), xaxt="n", panel.first =grid(), type ="l", col ="palegreen", main = "diff in time series ", xlim=c(0, 250), ylim = c(-2.5, 4))
+
+#axis.POSIXct(1, at = seq(as.Date(fechas[length(diff(datos$Low))]) ,as.Date(fechas[1]), by = "months"), format = "%m/%y")
+#axis.POSIXct(1, at = seq(as.Date(fechas[length(diff(datos$Low))]), as.Date(fechas[1]),  "years"),labels = F, tcl = -0.2)
+
+
+
+```
+
+
+
+
+###making the normal test
+
+1- make histogram  and density of differences
+```{r}
+difer <- diff(datos$Low)
+hist(difer, prob = T, ylim=c(0,0.6) )
+lines(density(diff(datos$Low)), lwd =2.5, col ="red")
+
+```
+
+2- Calculate mean
+```{r}
+mu <- mean(diff(datos$Low))
+mu
+
+```
+
+3- Calculate sigma
+
+```{r}
+
+sigma <- sd (diff(datos$Low))
+sigma
+```
+
+4- Vector x
+
+```{r}
+
+x <- seq(-4, 4, length=100)
+x
+
+```
+
+5- plotting to see if diff follow the normal
+
+```{r}
+
+y <- dnorm(x, mu, sigma)
+plot(x,y)
+lines(x,y, lwd =2, col ="blue")
+legend("topright", c("Histogram", "Density of Diff", "Normal"), lty = c(1,1), col = c("black", "red", "blue"), cex = .7)
+
+```
+
+
+#Linear smooth
+
+Plotting Volumes
+```{r}
+
+fechas <- strptime(as.character(datos$Date), "%Y-%m-%d")
+plot(datos$Volume,  panel.first =grid(), type ="l", col ="gray", main = "stock volume time series ", ylab = "Volume", xlab = "Dates")
+axis.POSIXct(1, at = seq(as.Date(fechas[length((datos$Volume))]) ,as.Date(fechas[1]), by = "months"), format = "%m/%y")
+axis.POSIXct(1, at = seq(as.Date(fechas[length((datos$Volume))]), as.Date(fechas[1]),  "years"),labels = F, tcl = -0.2)
+
+
+
+```
+
+
+smooth
+```{r}
+st.1 <- filter(datos$Volume, filter = rep(1/5,5))
+st.2 <- filter(datos$Volume, filter = rep(1/25,25))
+st.3 <- filter(datos$Volume, filter = rep(1/81,81))
+
+
+```
+
+Adding lines to the plot
+
+```{r}
+plot(st.1)
+lines(st.1, col ="green3")
+lines(st.2, col ="navy")
+lines(st.3, col ="red")
+
+#legend
+legend("topright", c("Volumer Over time", "Filter1 5", "Filter2s 25", "Filter3 81"), lty = 1, col = c("gray", "green3","navy", "red"), cex = .8, box.col = 1, lwd =2)
+
+
+```
+
+
+#Serie Decomposition
+
+
+
+```{r}
+datos <- read.csv("beer.csv", dec = ".", sep =",")
+head(datos)
+colnames(datos) <- c("year", "cant")
+
+```
+
+```{r}
+dim(datos)
+
+```
+
+Convert data to ts
+```{r}
+
+#Star year, month, freq = 1 data by month
+beer <- ts(datos[,2], start = c(1956,5), freq=12 )
+head(beer)
+
+```
+
+plotting the TS
+```{r}
+
+plot(beer)
+```
+
+Decomposition the TS
+
+```{r}
+#stl make decomposition
+s <- stl(beer, s.window = "periodic")
+head(s$time.series)
+
+```
+
+plotting the componenets of TS
+```{r}
+plot(s)
+
+```
+
+
+
+Example with stock data
+
+```{r}
+datos <- read.csv("stock.csv", header = T, dec = ".", sep =",")
+head(datos)
+
+```
+
+
+convert volume to time serie
+
+```{r}
+#Star year, month, freq = 12 data by month
+volume <- ts(datos[,6],  freq= 7 )
+head(volume)
+
+
+```
+
+Decomposition the TS
+
+```{r}
+#stl make decomposition
+s <- stl(volume, s.window = "periodic")
+head(s$time.series)
+
+```
+
+plotting the componenets of TS
+```{r}
+plot(s, col="red")
+
+```
