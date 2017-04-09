@@ -1,0 +1,389 @@
+---
+title: "Holt-winters and Errors"
+author: "Armand"
+date: "23 de julio de 2016"
+output: html_document
+---
+
+#Holt-Winters Predictions
+
+Load the data
+```{r}
+
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/series de tiempo/1/beer.csv", dec = ".")
+
+colnames(datos)<- c("date", "cant")
+head(datos)
+```
+
+Turn data into Ts
+```{r}
+#Convert data to ts
+tbeer <- ts(datos[,2], frequency = 12, start =1956)
+head(tbeer)
+
+```
+
+Holt-Winters
+```{r}
+beer.HS <- HoltWinters(tbeer)
+beer.HS #HE calc alpha, beta and gamma
+
+```
+
+Plotting HW
+```{r}
+layout(1,1)
+plot(beer.HS)
+
+```
+
+Predict
+```{r}
+pred <- predict(beer.HS, n.ahead = 10)
+
+```
+
+Plotting the Prediction
+```{r}
+plot(tbeer, las=1)
+lines(pred, col = "red", lwd =2)
+#another parameters for HW
+beer.HS2 <- HoltWinters(tbeer, alpha = 0.12, beta = 0.65, gamma = 0.21)
+lines(predict(beer.HS2, n.ahead = 10), col="navy", lwd =2.1)
+panel.first = grid()
+```
+
+
+#Example with Airpass
+
+```{r}
+suppressMessages(library(itsmr))
+head(airpass)
+
+```
+
+Convert Data into TS
+```{r}
+airpass <- ts(airpass, start=c(1949,1), frequency = 12)
+plot(airpass, type ="o", col= "darkgreen")
+```
+
+Run HW (holt-winters)
+
+```{r}
+hw <- HoltWinters(airpass)
+plot(hw)#The prediccion is in red
+
+```
+The prediction is in red
+
+###Now we will predict 20 days
+```{r}
+plot(airpass)
+lines(predict(hw, n.ahead = 20), col = "purple", lwd =2)
+#model with others parameters
+hw1 <- HoltWinters(airpass, alpha = 0.1, beta = 0.8, gamma = 0.1)
+lines(predict(hw1, n.ahead = 20), col = "green")
+panel.first =grid(nx =30)
+
+
+```
+
+
+#Measurement of Prediction Quality
+
+Holt- Winters
+
+Functions 
+```{r}
+ER <- function(pred, real){
+  
+  return (sum(abs(pred-real))/abs(sum(real)))
+  
+}
+
+#mean square Error
+
+ECM <- function(pred, real){
+  
+  N <- length(real)
+  ss <- sum((real-pred)^2)
+  return(ss/N)
+  
+}
+
+PFA <- function(pred, real){
+  total <- 0
+  N <- length(pred)
+  for (i in 1:N) {
+    if(pred[i]>= real[i])
+      total <- total +1
+  }
+  return(total/N)
+}
+
+
+PTFA <- function(pred, real){
+  
+  total <- 0
+  sreal <- 0
+  N <- length(pred)
+  for (i in 1:N) {
+    if(pred[i]>= real[i]){
+      total <- total + (pred[i]-real[i])
+      sreal <- sreal +abs(real[i])
+      }
+  }
+  return(total/sreal)
+}
+
+
+```
+
+
+#Example with ts beer
+
+Load the data
+```{r}
+
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/series de tiempo/1/beer.csv", dec = ".")
+
+colnames(datos)<- c("date", "cant")
+head(datos)
+```
+
+Turn data into Ts
+```{r}
+#Convert data to ts
+tbeer <- ts(datos[,2], frequency = 12, start =1956)
+#Another ts for testing
+beer.l <- tbeer[1:464]
+beer.t <- tbeer[465:475]
+beer.l <- ts(beer.l, frequency = 12, start =1956)
+head(tbeer)
+
+```
+
+```{r}
+length(beer.l)
+
+```
+
+Make the HW with learning data
+```{r}
+model <- HoltWinters(beer.l)
+model
+```
+
+Plotting the Model
+```{r}
+plot(model)
+```
+
+The predictions
+
+```{r}
+pred <- predict(model, n.ahead = 11)
+pred
+
+```
+
+The Relative Error
+```{r}
+ER(pred, beer.t)
+
+
+```
+
+The PFA Error
+```{r}
+PFA(pred, beer.t)
+
+```
+
+PTFA Error
+```{r}
+PTFA(pred, beer.t)
+
+```
+
+THE MSE
+```{r}
+sqrt(ECM(pred, beer.t))
+
+```
+
+###With another parameters
+```{r}
+model2 <- HoltWinters(beer.l, alpha =  0.02, beta = 0.9, gamma = 0.15)
+model2
+```
+
+Plotting the Model
+```{r}
+plot(model2)
+```
+
+The predictions
+
+```{r}
+pred <- predict(model2, n.ahead = 11)
+pred
+
+```
+
+The Relative Error
+```{r}
+ER(pred, beer.t)
+
+
+```
+
+The PFA Error
+```{r}
+PFA(pred, beer.t)
+
+```
+
+PTFA Error
+```{r}
+PTFA(pred, beer.t)
+
+```
+
+THE MSE
+```{r}
+sqrt(ECM(pred, beer.t))
+
+```
+
+
+##Example with box-jenkins
+
+```{r}
+suppressMessages(library(forecast))
+
+```
+
+The Auto ARIMA
+
+```{r}
+auto.arima(beer.l)
+
+```
+
+The parameter are ARIMA(1,1,0)(2,0,0) and period =12
+```{r}
+model <- arima(beer.l, order=c(1,1,0), seasonal = list(order=c(2,0,0), period=12))
+pred <- predict(model, n.ahead = 11)
+pred
+
+```
+
+##The ERRORS
+
+The Relative Error
+```{r}
+ER(pred$pred, beer.t)
+
+
+```
+
+The PFA Error
+```{r}
+PFA(pred$pred, beer.t)
+
+```
+
+PTFA Error
+```{r}
+PTFA(pred$pred, beer.t)
+
+```
+
+THE MSE
+```{r}
+sqrt(ECM(pred$pred, beer.t))
+
+```
+
+
+
+#Function to calibrate models
+
+```{r}
+
+calibrate <- function(train, test){
+  error.c <- Inf
+  alpha.i <- 0.1
+  while(alpha.i<=1){
+    beta.i <- 0
+    while(beta.i <=1){
+    gamma.i <- 0
+    while(gamma.i <=1){
+      mod.i <- HoltWinters(train, alpha = alpha.i, beta = beta.i, gamma = gamma.i)
+      pred.i <- predict(mod.i, n.ahead = length(test))
+      error.i <- sqrt(ECM(pred.i, test))
+      if(error.i < error.c){
+        error.c <- error.i
+        mod.c <- mod.i
+      }
+      gamma.i <- gamma.i + 0.1
+      
+      
+    }
+    beta.i <- beta.i+1
+  }
+    alpha.i <- alpha.i +1
+  }
+  
+  return(mod.c)
+  
+}
+
+```
+
+Testting the Calibrate function
+```{r}
+model <- calibrate(beer.l, beer.t)
+model
+
+```
+
+
+
+The predictions
+
+```{r}
+pred <- predict(model, n.ahead = 11)
+pred
+
+```
+
+The Relative Error
+```{r}
+ER(pred, beer.t)
+
+
+```
+
+The PFA Error
+```{r}
+PFA(pred, beer.t)
+
+```
+
+PTFA Error
+```{r}
+PTFA(pred, beer.t)
+
+```
+
+THE MSE
+```{r}
+sqrt(ECM(pred, beer.t))
+
+```
+
+
