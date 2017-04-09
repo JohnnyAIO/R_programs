@@ -1,0 +1,520 @@
+---
+title: "series tiempo 2"
+author: "Armand"
+date: "21 de julio de 2016"
+output: html_document
+---
+
+
+#Time Series 2
+
+
+load data
+```{r}
+
+datos <- read.table("prostate.data", dec = ".")
+head(datos)
+```
+
+##View the correlaction of data
+
+```{r}
+cor(datos)
+
+```
+the best is lcavol vs lpsa
+
+
+
+make the regression lcavol vs lpsa
+
+```{r}
+model <- lm(lpsa~lcavol, datos)
+model
+
+```
+
+
+Plotting data
+```{r}
+
+plot(lpsa~lcavol, datos)
+abline(model, col="red")
+
+```
+red line is the regression line
+
+
+###making the prediction
+
+```{r}
+pred <- predict(model, data.frame(lcavol=c(0.7,0.41,-0.23)), interval = "confidence")
+pred
+
+```
+
+
+
+#Multiple Regression
+
+```{r}
+
+train <- (datos[datos$train,])
+test <- (datos[!datos$train,])
+model <- lm(lpsa ~lcavol + lweight,data= train)
+model
+
+```
+
+Make the prediction
+
+```{r}
+
+pred2 <- predict(model, test)
+pred2
+
+```
+
+Function the calculate the erros
+
+```{r}
+#RSS
+RSS <- function(pred, real){
+  ss <- sum((real-pred)^2)
+  return (ss)
+  
+}
+
+#RSE
+RSE<- function(pred, real, numPre){
+  
+  N <- length(real)-numPre-1
+  ss1 <- sqrt((RSS(pred, real))/N)
+  return (ss1)
+  
+}
+
+#MSE
+MSE <- function(pred, real){
+  
+  N <- length(real)
+  ss <- (1/N)*RSS(pred, real)
+  return (ss)
+  
+  
+}
+
+#Relative Error
+
+ErrorRelative <- function(pred, real){
+  
+  ss <- sum(abs(real-pred))/sum(abs(real))
+  return (ss)
+}
+
+```
+
+
+
+#Evaluating Errors
+
+
+```{r}
+
+summary(model)
+
+```
+
+##Errors
+
+```{r}
+
+RSE(pred2, test$lpsa,2)
+
+```
+Note: for this values option confidence in lm can not be activated
+
+```{r}
+
+MSE(pred2, test$lpsa)
+
+
+```
+
+```{r}
+
+ErrorRelative(pred2, test$lpsa)
+
+```
+
+
+
+#Ridge Regression
+
+```{r}
+suppressMessages(library(glmnet))
+#build matraxi for glmnet i.e quit to predict variable
+x <- model.matrix(lpsa~.,train)
+head(x)
+
+```
+
+column 1 must be eliminated
+```{r}
+
+x <- model.matrix(lpsa~., train)[,-1]
+head(x)
+```
+
+
+extrac the variable to predict
+```{r}
+y <- train$lpsa
+
+
+```
+
+Build testting table 
+```{r}
+test.table <- model.matrix(lpsa~.,test)[,-1]
+
+```
+
+###Making the ridge regression
+
+```{r}
+
+ridge.mod <- glmnet(x,y, alpha =0)
+
+```
+
+Plottting the regression
+```{r}
+
+plot(ridge.mod, "lambda", label=T)
+panel.first = grid( lty = 3, lwd = 1)
+
+```
+
+###the coef with lambda big
+the coefs are small
+```{r}
+coef(ridge.mod)[,5]
+
+```
+
+
+###the coefs with lambda small
+the coefs are bigger
+```{r}
+coef(ridge.mod)[,98]
+```
+
+
+findinf the optimal lambda with CV
+```{r}
+dat.cv <- cv.glmnet(x,y, alpha=0)
+plot(dat.cv)
+
+```
+we can see the optimal lambda es between -2 to 0
+
+
+the value of lambda will be
+```{r}
+best.lambda <- dat.cv$lambda.min
+best.lambda
+
+```
+
+
+
+##Prediction with the best lambda
+
+```{r}
+
+pred <- predict(ridge.mod, s = best.lambda, newx = test.table)
+#MSE 
+
+MSE(pred, test$lpsa)
+```
+
+
+Relative Error
+```{r}
+
+ErrorRelative(pred, test$lpsa)
+
+```
+
+#Lasso Regression
+
+with the same data
+```{r}
+
+lasso.mod <- glmnet(x,y, alpha = 1)
+
+```
+
+###Plotting  the regression
+
+```{r}
+
+plot(lasso.mod, "lambda", label = T)
+panel.first = grid( lty = 3, lwd = 1)
+
+```
+
+
+###the coef with lambda big
+the coefs are small
+```{r}
+coef(lasso.mod)[,5]
+
+```
+
+
+###the coefs with lambda small
+the coefs are bigger
+```{r}
+coef(lasso.mod)[,70]
+```
+
+
+findinf the optimal lambda with CV
+```{r}
+dat.cv <- cv.glmnet(x,y, alpha=1)
+plot(dat.cv)
+
+```
+we can see the optimal lambda es between -5 to -2
+
+
+the value of lambda will be
+```{r}
+best.lambda <- dat.cv$lambda.min
+best.lambda
+
+```
+
+
+
+##Prediction with the best lambda
+
+```{r}
+
+pred <- predict(lasso.mod, s = best.lambda, newx = test.table)
+#MSE 
+
+MSE(pred, test$lpsa)
+```
+
+
+Relative Error
+```{r}
+
+ErrorRelative(pred, test$lpsa)
+
+```
+
+
+
+#Logistic Refression
+
+load data
+```{r}
+
+train <- read.table("C:/Users/Usuario/Desktop/promidat/predictivos/MuestraAprendizajeCredito2500.csv", sep = ";", header = T)
+test <- read.table("C:/Users/Usuario/Desktop/promidat/predictivos/MuestraTestCredito2500.csv", sep = ";", header = T)
+
+head(train)
+```
+
+Make the logistic model
+```{r}
+model <- glm(BuenPagador~., data = train, family = binomial)
+model
+ 
+```
+
+Look at the probabilities
+
+```{r}
+prob <- predict(model, test, type ="response")
+head(prob)
+
+```
+
+
+To Verify
+```{r}
+#packet turn into o and 1, 1 = si
+contrasts(train$BuenPagador)
+```
+
+##Making the Prediction
+We must Build the Rules of prediction
+```{r}
+prediction <- rep("No", dim(test)[1])
+head(prediction)
+
+```
+
+Building the Rules of prediction
+```{r}
+prediction[prob > 0.5] = "Si"
+actual <- test$BuenPagador
+
+```
+
+Confusion Matrix
+
+```{r}
+MC <- table(actual, prediction)
+MC
+
+```
+
+Error and success
+```{r}
+success <- (sum(diag(MC)))/sum(MC)
+success
+
+```
+
+```{r}
+error <- 1 -success
+error
+
+```
+
+
+#Fourier series
+
+
+
+Load data 
+```{r}
+
+datos <- read.csv("C:/Users/Usuario/Desktop/promidat/series de tiempo/1/beer.csv", dec = ".")
+
+colnames(datos)<- c("date", "cant")
+head(datos)
+```
+
+
+Take the log of beer cant
+
+```{r}
+lbeer <- log(datos[,2]) 
+t<- seq(1956, 1995.2, length= length(datos[,2]))
+
+```
+
+Plotting the lbeer data
+```{r}
+plot(t, lbeer, type = "o")
+
+```
+
+
+###Regression for the trends
+```{r}
+
+t2 <- t^2
+plot(t, lbeer, type = "o")
+lines(t, lm(lbeer~t+t2)$fit, col=2, lwd =2)
+
+```
+
+###Fourier for the periods
+Addind fouroes series to the model
+```{r}
+sin.t <- sin(2*pi*t)
+cos.t <- cos(2*pi*t)
+plot(t, lbeer, type = "o")
+lines(t, lm(lbeer~t+t2)$fit, col=2, lwd =2)
+lines(t, lm(lbeer~t+t2+sin.t+cos.t)$fit, col = 3, lwd =2)
+
+```
+
+
+Peridogram
+```{r}
+#Convert data to ts
+tbeer <- ts(datos[,2], frequency = 12, start =1956)
+res <- spec.pgram(tbeer, log = "no")
+res
+
+```
+
+order the data to find the max spec
+```{r}
+order(res$spec, res$freq, decreasing = T)
+
+```
+max spec ocurrs in freq = 40, second in 2, third in 120
+
+```{r}
+max1 <- res$freq[40]
+max1
+
+```
+
+max2
+```{r}
+max2 <- res$freq[2]
+max2
+
+```
+
+max3
+```{r}
+max3 <- res$freq[120]
+max3
+
+```
+
+
+###Plotting Peridogram
+
+```{r}
+
+
+plot(res$freq,res$spec)
+
+
+```
+
+
+the  first peak ocurre in 1 (from table order)
+```{r}
+plot(res$freq,res$spec)
+abline(v=max1, lty ="dotted", col ="red")
+# the 12 is from frecuency
+period1 <- 12/max1
+period1
+```
+
+
+the  second peak ocurre in 0.005
+```{r}
+plot(res$freq,res$spec)
+abline(v=max1, lty ="dotted", col ="red")
+abline(v=max2, lty ="dotted", col ="blue")
+period2 <- 12/max2
+period2
+```
+
+
+
+the third peak ocurre in 3
+```{r}
+plot(res$freq,res$spec)
+abline(v=max1, lty ="dotted", col ="red")
+abline(v=max2, lty ="dotted", col ="blue")
+abline(v=max3, lty ="dotted", col ="green2")
+period3 <- 12/max3
+period3
+```
+
