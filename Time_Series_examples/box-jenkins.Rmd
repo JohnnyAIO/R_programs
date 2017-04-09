@@ -1,0 +1,332 @@
+---
+title: "Box-Jenkins"
+author: "Armand"
+date: "22 de julio de 2016"
+output: html_document
+---
+
+
+##White Noise
+
+```{r}
+
+q <- rnorm(100, 0,1)
+q
+
+```
+
+plotting the noise
+
+```{r}
+par(mfrow=c(2,1))
+ts.plot(q)
+panel.first=grid()
+panel.first=grid()
+acf(q, main="Autocorrelation simple")
+panel.first=grid()
+
+```
+
+density
+```{r}
+plot(density(q))
+
+```
+
+
+
+###Random walk
+Example
+```{r}
+w <- rnorm(100) # w N(0,1)
+x <- w
+for (t in 2:100) {
+  x[t]<- x[t-1]+w[t]
+}
+
+par(mfrow=c(2,2))
+ts.plot(x, main="Random Walk x_t")
+acf(x, main="Autocorrelation simple xt")
+d <- diff(x) # differences of xs
+ts.plot(d, main ="first Difference of x_t")
+acf(d, main ="Autocorrelation simple of D", ylim = c(-1,1), ci.col="blue")
+```
+
+
+##Autoregressive (AR) model 
+order 1
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+#arima model
+AR <- arima.sim(n=100, model =list(order =c(1,0,0), ar =0.4))
+plot(AR, main =(expression(AR(1)~~~~phi==+0.4)))
+acf(AR, main ="Simple Autocorrelation", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation", ylim = c(-1,1), col ="black")
+```
+
+
+order 2
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+#arima model
+AR <- arima.sim(n=100, model =list(order =c(2,0,0), ar =c(0.8897,-0.4858)))
+plot(AR, main =(expression(AR(2)~~~~phi==c(0.8897,-0.4858))))
+acf(AR, main ="Simple Autocorrelation O2", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation O2", ylim = c(-1,1), col ="black")
+```
+
+
+
+#Moving Average
+
+Example order 1
+
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+#arima model
+AR <- arima.sim(n=100, list(order =c(0,0,1), ma =1))
+plot(AR, main =(expression(MA(1)~~~~theta==+1)))
+acf(AR, main ="Simple Autocorrelation O1", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation O1", ylim = c(-1,1), col ="black")
+```
+
+
+
+Example order 2
+
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+#arima model
+AR <- arima.sim(n=100, list(order =c(0,0,2), ma =c(0.7,0.3)))
+plot(AR, main =(expression(MA(2)~~~~theta==c(0.7,0.3))))
+acf(AR, main ="Simple Autocorrelation O2", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation O2", ylim = c(-1,1), col ="black")
+```
+
+
+##With lake data
+###ARMA Models
+
+```{r}
+data("LakeHuron")
+
+```
+
+Build ARMA(1,1)
+```{r}
+model <- arima(LakeHuron, order = c(1,0,1))
+pred <- predict(model, n.ahead = 8)#predict 8 data in time
+pred
+
+```
+
+###plotting Data
+
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+plot(LakeHuron, xlim = c(1875, 1980), ylim = c(575,590), type ="o")
+lines(pred$pred, col ="red", type ="o")
+lines(pred$pred+2*pred$se, col ="green3", lty =2, type ="o")
+lines(pred$pred-2*pred$se, col ="purple", lty =3, type ="o")
+acf(AR, main ="Simple Autocorrelation O1", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation O1", ylim = c(-1,1), col ="black")
+```
+
+###Model order 2
+
+Build ARMA(2,1)
+```{r}
+model <- arima(LakeHuron, order = c(2,0,1))
+pred <- predict(model, n.ahead = 8)#predict 8 data in time
+pred
+
+```
+
+
+###plotting Data
+
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+plot(LakeHuron, xlim = c(1875, 1980), ylim = c(575,590), type ="o")
+lines(pred$pred, col ="red", type ="o")
+lines(pred$pred+2*pred$se, col ="green3", lty =2, type ="o")
+lines(pred$pred-2*pred$se, col ="purple", lty =3, type ="o")
+acf(AR, main ="Simple Autocorrelation O1", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation O1", ylim = c(-1,1), col ="black")
+```
+
+
+### Now Arma(2,2)
+
+```{r}
+model <- arima(LakeHuron, order = c(2,0,2))
+pred <- predict(model, n.ahead = 8)#predict 8 data in time
+pred
+
+```
+
+
+
+###plotting Data
+
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+plot(LakeHuron, xlim = c(1875, 1980), ylim = c(575,590), type ="o")
+lines(pred$pred, col ="red", type ="o")
+lines(pred$pred+2*pred$se, col ="green3", lty =2, type ="o")
+lines(pred$pred-2*pred$se, col ="purple", lty =3, type ="o")
+acf(AR, main ="Simple Autocorrelation O1", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation O1", ylim = c(-1,1), col ="black")
+```
+
+
+#ARIMA(p,d,q) Model
+
+Load Library
+```{r}
+suppressMessages(library(forecast))
+
+```
+
+This function suggest parameters
+```{r}
+auto.arima(LakeHuron)
+
+
+```
+
+
+the model with the parameters suggested
+```{r}
+model <- arima(LakeHuron, order = c(0,1,4))
+pred <- predict(model, n.ahead = 8)#predict 8 data in time
+pred
+
+```
+
+
+
+###plotting Data
+
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+plot(LakeHuron, xlim = c(1875, 1980), ylim = c(575,590), type ="o")
+lines(pred$pred, col ="red", type ="o")
+lines(pred$pred+2*pred$se, col ="green3", lty =2, type ="o")
+lines(pred$pred-2*pred$se, col ="purple", lty =3, type ="o")
+acf(AR, main ="Simple Autocorrelation O1", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation O1", ylim = c(-1,1), col ="black")
+```
+
+
+
+#ARMIA(p,d,q)(P,D,Q)
+
+With periodgram
+```{r}
+layout(1,1)
+res.per <- spec.pgram(LakeHuron, log ="no")
+
+```
+
+Sort the Data
+```{r}
+order( res.per$spec, res.per$freq, decreasing = T)
+
+```
+
+The point are  3, 13 and 9
+
+The frecuency at given points
+```{r}
+
+max1 <- res.per$freq[3]
+max2 <- res.per$fre[13]
+max3 <- res.per$fre[9]
+```
+
+Adding the lines
+```{r}
+res.per <- spec.pgram(LakeHuron, log ="no")
+abline(v=max1, lty=3, col = 2)
+abline(v=max2, lyt =3, col=3)
+abline(v=max3, lty = 3, col = 4)
+```
+
+
+###The periods are
+Period 1
+```{r}
+period1 <- 1/max1
+period1
+```
+
+Period 2
+```{r}
+period2 <- 1/max2
+period2
+```
+
+Period 3
+```{r}
+period3 <- 1/max3
+period3
+```
+
+
+
+#Buildind arima model
+give the period = 11 to the model
+```{r}
+model <- arima(LakeHuron, order=c(1,2,1), seasonal = list(order=c(2,1,0), period=11))
+pred <- predict(model, n.ahead = 8)
+pred
+
+```
+
+###plotting Data
+
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+plot(LakeHuron, xlim = c(1875, 1980), ylim = c(575,590), type ="o")
+lines(pred$pred, col ="red", type ="o")
+lines(pred$pred+2*pred$se, col ="green3", lty =2, type ="o")
+lines(pred$pred-2*pred$se, col ="purple", lty =3, type ="o")
+acf(AR, main ="Simple Autocorrelation", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation", ylim = c(-1,1), col ="black")
+```
+
+
+give the period = 7 to the model
+```{r}
+#order = p,d,q y seasonal = P,D,Q
+model <- arima(LakeHuron, order=c(1,2,1), seasonal = list(order=c(2,1,0), period=7))
+pred <- predict(model, n.ahead = 8)
+pred
+
+```
+
+###plotting Data
+
+```{r}
+
+layout(matrix(c(1,1,2,3),2,2, byrow=TRUE))
+plot(LakeHuron, xlim = c(1875, 1980), ylim = c(575,590), type ="o")
+lines(pred$pred, col ="red", type ="o")
+lines(pred$pred+2*pred$se, col ="green3", lty =2, type ="o")
+lines(pred$pred-2*pred$se, col ="purple", lty =3, type ="o")
+acf(AR, main ="Simple Autocorrelation", ylim = c(-1,1), col ="black")
+pacf(AR, main ="Partial Autocorrelation", ylim = c(-1,1), col ="black")
+```
+
+
+whih one is the best model?We must do additional analysis
