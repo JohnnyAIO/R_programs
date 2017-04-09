@@ -1,0 +1,68 @@
+---
+title: "SQL R"
+author: "Armand"
+date: "26 de julio de 2016"
+output: html_document
+---
+
+
+##SQL With Postgres
+
+```{r}
+require("RPostgreSQL")
+
+```
+
+Make the connection
+```{r}
+
+# loads the PostgreSQL driver
+drv <- dbDriver("PostgreSQL")
+# creates a connection to the postgres database
+# note that "con" will be used later in each connection to the database
+con <- dbConnect(drv, dbname = "rmining",
+                 host = "localhost", port = 5432,
+                 user = "postgres", password = "escudero")
+
+#Check if tables exist
+dbExistsTable(con, "miner")
+
+```
+
+##Read the data from Postgres
+
+```{r}
+df_postgres <- dbGetQuery(con, "SELECT * from miner")
+
+```
+
+Check the data readed
+
+```{r}
+head(df_postgres)
+
+```
+
+```{r}
+df_postgres <- df_postgres[,-1]
+summary(df_postgres)
+
+```
+
+
+writes to DB
+```{r}
+dbWriteTable(con, "miner", 
+             value = df, append = TRUE, row.names = FALSE)
+
+```
+
+
+###Finally close connection
+```{r}
+# close the connection
+dbDisconnect(con)
+#dbUnloadDriver(drv)
+
+```
+
