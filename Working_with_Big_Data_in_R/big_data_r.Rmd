@@ -1,0 +1,108 @@
+---
+title: "Big data intro"
+author: "Armand"
+date: "28 de julio de 2016"
+output: html_document
+---
+
+##Big Data Intro 1
+
+##using ff package
+load the package
+```{r}
+suppressMessages(library(ff))
+suppressMessages(library(ffbase))
+suppressMessages(library(biglm))
+
+```
+
+Create a Big Vector and save to ff
+```{r}
+
+x <- ff(rep(0, 1e8))
+
+```
+
+Some Calc
+```{r}
+#With packege ffbase
+mean(x)
+
+```
+
+```{r}
+length(x)
+
+```
+
+##Loops with ff
+
+```{r}
+m <- -Inf
+for (i in chunk(x)) {
+  m <- max(x[i],m, na.rm =T)
+  
+}
+m
+
+```
+
+
+
+#transforming a R data Frame to ff
+
+```{r}
+data(mtcars)
+head(mtcars)
+```
+
+```{r}
+mtcars_ff <- as.ffdf(mtcars)
+class(mtcars_ff)
+
+```
+
+```{r}
+head(mtcars_ff)
+
+```
+
+Looking in a ff Data frame
+
+```{r}
+idx <- ffwhich(mtcars_ff, hp>120 )
+mtcars_ff[idx[], ]
+```
+
+
+##Regression with objects ff
+using bigglm
+```{r}
+
+model <- bigglm(hp~drat, data= mtcars_ff)
+coef(model)
+```
+
+we can add the filename
+```{r}
+vc <- rep(1, 200)
+vc1 <- ff(vc, filename = "file1.mat", length = 200, overwrite = T)
+vc1
+```
+
+
+#Read Data From file to ff
+
+```{r}
+datos <- read.csv.ffdf(file="SAheart.csv", sep=",", header =T, dec =".", row.names=1)
+head(datos)
+```
+
+```{r}
+str(datos)
+
+```
+
+#Regression with Biglm
+
+
