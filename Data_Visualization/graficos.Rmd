@@ -1,0 +1,192 @@
+---
+title: "Visualization Examples"
+author: "Armand"
+date: "18 de julio de 2016"
+output: html_document
+---
+
+
+##Example qplot
+
+```{r}
+library(ggplot2)
+qplot(mpg, cyl, data = mtcars, col = as.factor(hp))
+```
+
+##Change the theme
+
+```{r}
+qplot(mpg, cyl, data = mtcars, col = as.factor(hp)) + theme_bw(15)
+
+```
+
+
+##Change the Position of legend
+
+```{r}
+qplot(mpg, cyl, data = mtcars, col = hp) + theme( legend.position= "bottom")
+
+```
+
+
+##Changing the element
+
+```{r}
+qplot(mpg, vs, data = mtcars, col = as.factor(vs), shape = as.factor(vs)  ) + theme( legend.position= "bottom")
+
+```
+
+##Adding name to legend
+
+```{r}
+
+qplot(mpg, vs, data = mtcars, col = as.factor(vs), shape = as.factor(vs)  ) + theme( legend.position= "bottom")+ scale_shape_discrete(name = "vs") + scale_color_discrete(name ="VS2")
+```
+
+#ggplot examples
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length)) + geom_point() + scale_x_continuous("Longitud")
+
+```
+
+
+##Changing colors and shapes
+
+```{r}
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length, shape =Species, color = Species)) + geom_point()  + scale_x_continuous("Longitud")
+
+```
+
+
+##Adding curve to data:
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length, shape =Species, color = Species)) + geom_point()  + scale_x_continuous("Longitud") + geom_smooth(se = FALSE)
+
+```
+
+
+##Adding only 1 curve
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length, shape ="p", color = "pink")) + geom_point()  + scale_x_continuous("Longitud") + geom_smooth(se = TRUE)
+
+```
+
+##Quitting the points and plotin smooth with regression method
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length, color = "pink"))   + scale_x_continuous("Longitud") + geom_smooth(se = TRUE, method = lm)
+
+
+```
+
+
+##Adding the points
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length, color = "pink")) + geom_point()  + scale_x_continuous("Longitud") + geom_smooth(se = TRUE, method = lm)
+
+```
+
+##Faceting with ggplot:
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length, shape =Species, color = Species)) + geom_point()  + scale_x_continuous(" Sepal Length ")+ scale_y_continuous("Petal Length") + geom_smooth(se = FALSE, method = lm) + facet_wrap(~Species)+ ggtitle("Relationship Between Sepal Lenght vs Petal length")  
+
+```
+
+
+##Plotting histogram:
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length )) + geom_histogram(binwidth = .5, colour="black", fill ="white")  + scale_x_continuous(" Sepal Length ")+ scale_y_continuous("Petal Length") + ggtitle("Relationship Between Sepal Lenght vs Petal length") 
+
+```
+
+##Plotting Horizontal Histogram:
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length )) + geom_histogram(binwidth = .5, colour="black", fill ="white")  + scale_x_continuous(" Sepal Length ")+ scale_y_continuous("Petal Length") + ggtitle("Relationship Between Sepal Lenght vs Petal length") + coord_flip()
+
+```
+
+##Adjusting the facets scales
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length, shape =Species, color = Species)) + geom_point()  + scale_x_continuous(" Sepal Length ")+ scale_y_continuous("Petal Length") + geom_smooth(se = FALSE, method = lm) + facet_wrap(~Species, scale="free_y")+  ggtitle("Relationship Between Sepal Lenght vs Petal length") 
+
+```
+
+
+
+Plotting Density:
+
+```{r}
+ggplot(iris, aes( x=Sepal.Length )) + geom_density()  + scale_x_continuous(" Sepal Length ")+ scale_y_continuous("Petal Length") + ggtitle("Relationship Between Sepal Lenght vs Petal length")
+
+```
+
+##Filling Densities plots:
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, fill =as.factor(Species) )) + geom_density()  + scale_x_continuous(" Sepal Length ")+ scale_y_continuous("Petal Length") + ggtitle("Relationship Between Sepal Lenght vs Petal length")+ scale_fill_discrete(name = "Species")
+
+```
+
+
+##Adding color to lines in density graphs
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, color =as.factor(Species) )) + geom_density()  + scale_x_continuous(" Sepal Length ")+ scale_y_continuous("Petal Length") + ggtitle("Relationship Between Sepal Lenght vs Petal length")+ scale_fill_discrete(name = "Species")
+
+```
+
+
+
+##Box plot
+
+```{r}
+
+ggplot(iris, aes( x=Sepal.Length, y = Petal.Length, group = Sepal.Length )) + geom_boxplot() + ggtitle("Relationship Between Sepal Lenght vs Petal length")
+
+```
+
+
+
+##Violin Graphs:
+
+```{r}
+
+ggplot(data = iris, aes(x =(Sepal.Length) , y = Sepal.Length)) + geom_violin() + ggtitle("Relationship Between Sepal Lenght vs Petal length")
+
+```
+
+
+##Adding text with ggplot:
+```{r}
+
+ggplot(data = mtcars, aes(wt , mpg, label = row.names(mtcars))) + geom_point()+ ggtitle("Relationship Between Sepal Lenght vs Petal length")+ geom_text()
+
+```
+
+
+##Cheking overlap:
+
+```{r}
+
+ggplot(data = mtcars, aes(wt , mpg, label = row.names(mtcars))) + geom_point()+ ggtitle("Relationship Between Sepal Lenght vs Petal length")+ geom_text( check_overlap = TRUE)
+
+```
+
