@@ -1,0 +1,257 @@
+---
+title: "Reglas de Asociacion"
+author: "Armand"
+date: "20 de julio de 2016"
+output: html_document
+---
+
+
+#Reglas de Asociacion Apriori Algoritmo
+
+```{r}
+
+#Librerias a utilizar
+suppressMessages(library(arules))
+suppressMessages(library(arulesViz))
+
+```
+
+###leemos los datos
+```{r}
+
+##Guardamos los datos
+
+#write.table(datos,"titanic-fixed.csv", sep = ";", col.names = TRUE, row.names = FALSE)
+datos <- read.csv("titanic-fixed.csv", sep = ";", header = T)
+
+```
+
+
+##Implementacion del Algoritmo apriori
+```{r}
+str(datos)
+#Creamos las reglas 
+reglas <- apriori(datos)
+
+
+
+```
+
+
+
+
+###Inspeccionamos las reglas
+
+```{r}
+
+inspect(reglas)
+
+```
+
+
+
+##Cambamos los parametros default del metodo
+```{r}
+#Por default minlen = 1, maxlen =10, sup = 0.1, conf =0.1
+reglas2 <-  apriori(data=datos, parameter = list(minlen =2, supp = 0.005, conf = 0.8), appearance = list(rhs =c("survided=no", "survided=yes"), default ="lhs"), control = list(verbose= F))
+
+```
+
+
+
+###Inspeccionamos las reglas de nuevo
+
+```{r}
+
+inspect(reglas2)
+
+```
+
+
+
+Ordenamos las Reglas
+
+```{r}
+
+rgorden <- sort(reglas2, by = "lift")
+inspect(rgorden)
+
+```
+
+
+
+
+eliminamos reglas que no aportan mucho valor
+
+```{r}
+##Encontramos los subconjuntos
+subset <- is.subset(rgorden, rgorden)
+
+
+#Analizar Triangular 
+
+subset[lower.tri(subset, diag = T)] <- NA
+
+##Buscamos las redundantes
+
+redund <- colSums(subset, na.rm = T) >= 1
+
+which(redund)
+
+```
+
+
+##Eliminamos las redundantes ( las que estan en el subconjunto)
+y mostramos las reglas sustanciales
+```{r}
+
+rgpoda <- rgorden[!redund]
+inspect(rgpoda)
+
+
+```
+
+
+
+
+
+#Graficamos las reglas
+
+```{r}
+#Con el plot sencillo
+plot(rgpoda)
+
+
+```
+
+agrupados
+```{r}
+
+#con el metodo grouped
+plot(rgpoda, method = "grouped")
+
+```
+
+
+grafos
+
+```{r}
+
+#con el metodo grafos
+plot(rgpoda, method ="graph", control = list(type ="items"))
+
+```
+
+
+Grafos como Itemsets
+
+
+```{r}
+
+#con el metodo grafos
+plot(rgpoda, method ="graph", control = list(type ="itemsets"))
+
+```
+
+
+como grafico paralelo
+```{r}
+
+plot(rgpoda, method ="paracoord", control = list(reorder=T))
+
+
+
+```
+
+
+#Datos Organizados en grupos de Items
+
+ejemplo organizado en transacciones
+```{r}
+#Para leer archivos de transaciones se utiliza la instruccion 
+#read.transaction(file="", sep =",")
+#Este caso utilizaremos los datos del  arules Groceries
+data("Groceries")
+
+summary(Groceries)
+```
+
+inspeccionamos los datos
+
+```{r}
+
+inspect(Groceries[1:5])
+
+```
+
+Ver soporte como texto y grafica
+
+```{r}
+#Vemos elitem support
+itemFrequency(Groceries)
+
+```
+
+
+GraficamosItems para un soporte especifico
+```{r}
+itemFrequencyPlot(Groceries)
+
+
+```
+
+
+Graficamos los 3 item mas frecuentes
+```{r}
+itemFrequencyPlot(Groceries, topN=3)
+
+
+```
+
+
+##Ahora ejecutamos el algoritmo apriori
+
+```{r}
+
+reglas3 <- apriori(data = Groceries, parameter = list(minlen=2, supp=0.002))
+
+```
+
+
+Odenamos las reglas
+
+```{r}
+
+rgorden2 <- sort(reglas3, by ="lift")
+inspect(rgorden2)
+
+```
+
+
+##Se grafican las reglas
+
+```{r}
+
+plot(rgorden2, method = "grouped")
+
+```
+
+##Se grafican las reglas como grafo
+
+```{r}
+
+plot(rgorden2, method = "graph")
+
+```
+
+
+
+##Se grafican las reglas como grafo mas ordenadas
+
+```{r}
+
+plot(rgorden2, method = "graph", control = list(type ="itemsets"))
+
+```
+
+
