@@ -1,0 +1,251 @@
+---
+title: "Gráficas Avanzadas"
+author: "Armand"
+date: "19 de julio de 2016"
+output: html_document
+---
+```{r}
+
+library(maps)
+library(lattice)
+library(rgl)
+
+
+```
+
+
+#Usando trellis
+##Abrimos nuevo dispositivo Gráfico
+
+```{r}
+trellis.device()
+
+```
+
+
+##Gráfico XY
+
+```{r}
+
+xyplot(iris$Sepal.Length ~ iris$Petal.Length | iris$Species,  datos = iris, groups = iris$Species, main = "Especie segun longitudes de petalos y sepales", ylab = "Longitud Sepal", xlab = "longitud del Petalo", auto.key = list(space = "top", pch =21, cex.title = 1, columns = 3))
+
+
+```
+
+
+##Gráfico dotplot
+
+```{r}
+dotplot(iris$Sepal.Length ~ iris$Petal.Length | iris$Species,  datos = iris, groups = iris$Species, main = "Especie segun longitudes de petalos y sepales", ylab = "Longitud Sepal", xlab = "longitud del Petalo", auto.key = list(space = "top", pch =21, cex.title = 1, columns = 3))
+
+
+```
+
+
+##Gráfico boxplot
+
+```{r}
+
+bwplot(iris$Petal.Length ~ iris$Sepal.Length,  datos = iris, groups = iris$Species, main = "Especie segun longitudes de petalos y sepales", ylab = "Longitud Sepal", xlab = "longitud del Petalo", auto.key = list(space = "top", pch =21, cex.title = 1, columns = 3))
+
+```
+
+
+##Histograma
+
+Este es más facil
+```{r}
+
+histogram( ~ iris$Sepal.Length,  datos = iris, main = "Histograma de Longitudes de sepales", ylab = "Longitud Sepal", xlab = "longitud del Petalo", auto.key = list(space = "top", pch =21, cex.title = 1, columns = 3))
+
+```
+
+
+
+##Gráfico qqmath
+
+```{r}
+
+qqmath( ~ iris$Sepal.Length | iris$Species,  datos = iris, main = "Relacion con la qnorm de Longitudes de sepales",  auto.key = list(space = "top", pch =21, cex.title = 1, columns = 3))
+
+```
+
+
+
+##Gráfico de Densidad 
+
+```{r}
+
+
+densityplot( ~ iris$Sepal.Length,  datos = iris, main = "Gráfico de densidad de las Longitudes de sepales",  auto.key = list(space = "top", pch =21, cex.title = 1, columns = 1))
+
+```
+
+
+
+#Paquete RGL Gráficos 3d
+
+```{r}
+#leemos los datos
+datos1 <- read.csv("winequality-red.csv", header = TRUE, sep = ";", dec = ".")
+datos2 <- read.csv("winequality-white.csv", header = TRUE, sep = ";", dec = ".")
+
+#agregamos columna
+datos2$tipo <- as.factor("w")
+datos1$tipo <- as.factor("r")
+
+#Combinamos
+datos <- rbind(datos1, datos2)
+
+```
+
+##Primera grafica con rgl
+
+```{r}
+rgl.bg(color = "gray")
+#Este Gráfico puede rotar
+rgl.points(datos$quality ~ datos$pH + datos$residual.sugar, color ="red", size = 5)
+
+
+```
+
+###Gráfico 3d
+
+```{r}
+
+plot3d(x = datos$pH, y = datos$quality, z = datos$citric.acid, size=3, type = "s",col = c(2,3,4) )
+
+```
+
+Tambien se puede agregar una vista
+```{r}
+rgl.viewpoint( theta = 70, phi = 5, fov = 80, zoom = 1, scale = par3d("scale"), interactive = TRUE)
+
+
+```
+
+##El Gráfico se puede animar 
+
+```{r}
+
+play3d(spin3d(axis = c(0,0,1)), duration = 15)
+#movie3d( spin3d( axis = c(0, 0, 1), rpm = 7), 
+#         duration = 10, dir = getwd(),
+#         type = "gif" )
+
+```
+
+
+
+
+#Mapas
+```{r}
+##Cargamos la libreria
+library(maps)
+library(RColorBrewer)
+colors = brewer.pal(8, "Greens")
+
+```
+
+
+
+## Ejemplo con Datos countries
+```{r}
+
+countries <- read.csv("countries.csv", sep = ";", header = TRUE, dec = ".")
+colnames(countries)[1]<- "country"
+countries$country <- as.character(countries$country)
+
+```
+
+## Graficamos
+
+
+```{r}
+
+#mapa vacio
+x<- map(plot = FALSE)
+
+x$measure <- array(NA, dim = length(x$names))
+
+#Valores para el mapa
+x$measure <- array(NA, dim = length(x$names))
+
+#Todos los paises en el archivo de datos
+for (i in 1:length(countries$country)) {
+  #todos los paises en el map
+  
+  for (j in 1:length(x$names)) {
+    
+    #Encontrat pais y asignar valor del mismo
+    if(grepl(countries$country[i], x$names[j], ignore.case = T))
+    {
+      
+      x$measure[j] = countries$Life.expectancy[i]
+    }
+    
+    }
+
+}
+
+
+```
+
+
+
+```{r}
+
+#Crear grupos de Colores
+ad <- data.frame(col = colors, values = seq(min(x$measure[!is.na(x$measure)]), max(x$measure[!is.na(x$measure)]), length.out = 8))
+
+#valores en blanco para los paises no encontrados
+#los otros los sustituyo en el loop
+nc <- array("#FFFFFF", dim= length(x$names))
+
+
+
+#Asignar valor
+
+for (i in 1:length(x$names)) {
+  
+  if(!is.na(x$measure[i]))
+    nc[i] <- as.character(ad$col[findInterval(x$measure[i], ad$values)])
+  
+}
+
+
+#layout legend
+
+layout(matrix(data = c(2,1), nrow =1, ncol = 2), widths =c(8,1), heights=c(8,1) )
+
+#Scale
+
+breaks <- ad$values
+
+par(mar = c(10,1,4,4), oma = c(0.2,0.2,0.2,0.2), mex = .5)
+
+#legend as image
+
+image(x =1, y = 0.5:(length(breaks)), z = t(matrix(breaks))*1.001, col = colors[1:length(breaks)-1], axes = F, breaks = breaks, xlab ="", ylab ="", xaxt = "n")
+
+
+
+axis(side = 4, at=0:(length(breaks)-1), labels = round(breaks), col = "white", las = 1)
+
+
+#lineas separadoras
+
+abline(h = c(0:length(breaks)-1), col = "white",lwd =2, xpd =F )
+
+#mapa colores
+
+map(col = nc, fill = T, lty = "blank")
+
+##Agregar silueta
+map(add =T, col ="gray", fill = F)
+title("Expectativa de Vida por paises")
+
+
+
+```
+
