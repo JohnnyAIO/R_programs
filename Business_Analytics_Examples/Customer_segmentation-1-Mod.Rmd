@@ -1,0 +1,155 @@
+---
+title: "Statistical segmentation 1"
+author: "Armand"
+date: "13 de septiembre de 2016"
+output: html_document
+---
+
+##Load the data
+```{r}
+data = read.delim(file = 'purchases.txt', header = FALSE, sep = '\t', dec = '.')
+head(data)
+
+```
+
+
+##Formating the data
+
+```{r}
+colnames(data) = c('customer_id', 'purchase_amount', 'date_of_purchase')
+data$date_of_purchase = as.Date(data$date_of_purchase, "%Y-%m-%d")
+data$days_since       = as.numeric(difftime(time1 = "2016-01-01",
+                                            time2 = data$date_of_purchase,
+                                            units = "days"))
+
+head(data)
+```
+
+
+##Examine the data
+```{r}
+summary(data)
+
+```
+
+
+##Load the library and computing the key with sql
+
+```{r}
+
+library(sqldf)
+
+# Compute recency, frequency, and average purchase amount
+customers = sqldf("SELECT customer_id,
+                          MIN(days_since) AS 'recency',
+                          COUNT(*) AS 'frequency',
+                          AVG(purchase_amount) AS 'amount'
+                   FROM data GROUP BY 1")
+
+```
+
+##Exploring the data
+
+```{r}
+
+head(customers)
+summary(customers)
+hist(customers$recency)
+hist(customers$frequency)
+hist(customers$amount)
+hist(customers$amount, breaks = 100)
+
+
+```
+
+
+
+#Preparing and transforming the data
+
+```{r}
+
+new_data = customers
+
+# Remove customer id as a variable, store it as row names
+head(new_data)
+row.names(new_data) = new_data$customer_id
+new_data$frequency = log(new_data$frequency)
+new_data$customer_id = NULL
+head(new_data)
+
+# Take the log-transform of the amount, and plot
+new_data$amount = log(new_data$amount)
+hist(new_data$amount)
+
+# Standardize variables important!!!
+new_data = scale(new_data)
+head(new_data)
+
+
+
+```
+
+
+#RUNNING A HIERARCHICAL SEGMENTATION
+
+```{r}
+
+# Take a 10% sample in order to avoid memory leakeage
+sample = seq(1, 18417, by = 10)
+head(sample)
+customers_sample = customers[sample, ]
+new_data_sample  = new_data[sample, ]
+```
+
+
+
+
+##Computing the distance
+
+```{r}
+d = dist(new_data_sample)
+
+
+```
+
+## Perform hierarchical clustering on distance metrics
+```{r}
+c = hclust(d, method="ward.D2")
+
+```
+
+
+##Plot the dendogram
+
+```{r}
+plot(c)
+
+
+```
+
+##Take 5 segments
+
+```{r}
+members = cutree(c, k = 5)
+
+
+```
+
+##Show only 30 first customer
+
+```{r}
+members[1:30]
+table(members)
+
+```
+
+##Show profile
+
+```{r}
+aggregate(customers_sample[, 2:4], by = list(members), mean)
+
+
+
+```
+
+
