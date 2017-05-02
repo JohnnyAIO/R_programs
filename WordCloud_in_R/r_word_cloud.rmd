@@ -1,0 +1,86 @@
+---
+title: "WordCloud With R"
+author: "Armand"
+date: "1 de mayo de 2017"
+output: html_document
+---
+
+#We will make a wordcloud from a txt document
+###The document is the speech of the Infamous Venezuelan President Nicolás Maduro in Cuba on  November 30, 2016
+
+##Load the packages
+```{r}
+suppressWarnings(library(tm)) #Text mining 
+suppressWarnings(library(wordcloud))# WordCloud
+suppressWarnings(library(RColorBrewer)) # Colors
+
+
+```
+
+##Read the file
+```{r}
+myfile <- suppressWarnings(paste(readLines('file.txt'), collapse=" "))
+
+```
+
+##Formanting and cleanind the data
+```{r}
+df1 <- data.frame(c(myfile))
+df1 <- DataframeSource(df1)
+#df1 <- DataframeSource(textto)
+#head(df1)
+
+
+###change df1 to Corpus
+corps <- Corpus(df1)
+##Remove Punctuation
+corps <-tm_map(corps, removePunctuation)
+##Change to lower case
+corps <- tm_map(corps, tolower)
+#Remove Numbers
+corps <- tm_map(corps, removeNumbers)
+#Remove words in spanish like 'a' 'de' 'lo' etc
+corps <- tm_map(corps, removeWords, stopwords('spanish'))
+#Corpt to Text
+corps <- tm_map(corps, PlainTextDocument)
+##Matrix
+matrix.ter <- TermDocumentMatrix(corps)
+matrix.ter <- as.matrix(matrix.ter)
+head(matrix.ter)
+
+
+```
+
+
+##Change the df to vector
+```{r}
+####Vector
+vector.ter <- sort(rowSums(matrix.ter), decreasing=TRUE)
+head(vector.ter)
+
+dataframe.ter <- data.frame(word =names(vector.ter), freq=vector.ter)
+
+
+```
+
+##This dataframe will be use to build the wordcloud
+```{r}
+## Finally this dataframe will be use to build the wordcloud
+head(dataframe.ter)
+
+
+```
+
+
+
+##Finally, we Make the graph
+
+```{r}
+suppressWarnings(wordcloud(dataframe.ter$word, dataframe.ter$freq, scale=c(8,.2), min.freq=3, max.words=Inf, random.order=FALSE,rot.per=.15, colors=brewer.pal(8,"Dark2")))
+
+
+```
+
+
+##Conclusion:
+###Nothing new the main words are: Chavez and Fidel.
